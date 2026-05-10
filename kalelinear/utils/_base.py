@@ -85,7 +85,8 @@ def mmd_coef(ns, nt, ys=None, yt=None, kind="marginal", mu=0.5):
 def centering_matrix(size, dtype=np.float64):
     """Generate a centering matrix."""
     unit_matrix = np.eye(size, dtype=dtype)
-    return unit_matrix - 1.0 / size * np.ones((size, size), dtype=dtype)
+    mean_matrix = np.array(1.0 / size, dtype=dtype) * np.ones((size, size), dtype=dtype)
+    return unit_matrix - mean_matrix
 
 
 def centered_kernel_matrix(X, kernel="linear", metric=None, filter_params=True, **kwargs):
