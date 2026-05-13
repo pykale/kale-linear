@@ -24,14 +24,14 @@ def _init_artl(estimator, Xs, ys, Xt=None, yt=None, **kwargs):
     Parameters
     ----------
     Xs : array-like
-        Source data, shape (ns_samples, n_features)
+        Source data, shape (n_source_samples, n_features)
     ys : array-like
-        Source labels, shape (ns_samples,)
+        Source labels, shape (n_source_samples,)
     Xt : array-like
-        Target data, shape (nt_samples, n_features), the first ntl
-        samples are labelled if yt is not None
+        Target data, shape (n_target_samples, n_features), the first
+        n_labeled_target_samples samples are labeled and should be aligned with yt if provided.
     yt : array-like, optional
-        Target label, shape (ntl_samples, ), by default None
+        Target label, shape (n_labeled_target_samples, ), by default None
 
     Returns
     -------
@@ -371,7 +371,7 @@ class ARRLS(BaseDomainAdaptationEstimator):
         covariates : array-like, optional
             Binary domain labels aligned with ``X``.
         target_covariate : scalar, optional
-            Domain value identifying target samples. Defaults to the first
+            Domain value identifying target samples. Defaults to the last
             sorted covariate value.
         unlabeled_value : scalar, optional
             Sentinel used for unlabeled target rows when ``y`` is full length.
