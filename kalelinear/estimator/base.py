@@ -210,13 +210,13 @@ class BaseDomainAdaptationEstimator(BaseKaleEstimator):
 
         target_unlabeled_idx = np.setdiff1d(target_idx, target_labeled_idx, assume_unique=True)
         target_fit_idx = np.concatenate([target_labeled_idx, target_unlabeled_idx])
-        yt = y[target_labeled_idx] if target_labeled_idx.size > 0 else None
+        y_target = y[target_labeled_idx] if target_labeled_idx.size > 0 else None
 
         return {
             "Xs": X[source_idx],
             "ys": ys,
-            "Xt": X[target_fit_idx],
-            "yt": yt,
+            "X_target": X[target_fit_idx],
+            "y_target": y_target,
             "source_idx": source_idx,
             "target_idx": target_idx,
             "target_fit_idx": target_fit_idx,

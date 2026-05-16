@@ -67,7 +67,9 @@ Example 2: Using Adaptation Regularisation Learning Framework
 from kalelinear.estimator import ARSVM
 
 clf = ARSVM()
-clf.fit(Xs, ys, Xt)
+X = np.concatenate((Xs, Xt))
+domains = np.concatenate((np.zeros(Xs.shape[0]), np.ones(Xt.shape[0])))
+clf.fit(X, ys, covariates=domains, target_covariate=1)
 y_pred = clf.predict(Xt)
 ```
 

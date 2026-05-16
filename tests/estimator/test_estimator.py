@@ -138,22 +138,28 @@ def test_artl_estimators_predict_labels(estimator_cls, office_test_data):
 
 
 @pytest.mark.parametrize("estimator_cls", [estimator.ARSVM, estimator.ARRLS])
-def test_artl_covariate_api_matches_legacy_api(estimator_cls, office_test_data):
+def test_artl_covariate_api_accepts_source_only_or_full_labels(estimator_cls, office_test_data):
     x, y, z, _ = office_test_data
     tgt_idx = np.where(z == 0)
     src_idx = np.where(z != 0)
 
-    legacy = estimator_cls().fit(x[src_idx], y[src_idx], Xt=x[tgt_idx])
     covariate = estimator_cls().fit(x, y[src_idx], covariates=z, target_covariate=0)
     full_y = y.copy()
     full_y[tgt_idx] = -1
     covariate_full_y = estimator_cls().fit(x, full_y, covariates=z, target_covariate=0, unlabeled_value=-1)
 
-    legacy_decision = legacy.decision_function(x[tgt_idx])
-    assert np.allclose(covariate.decision_function(x[tgt_idx]), legacy_decision)
-    assert np.allclose(covariate_full_y.decision_function(x[tgt_idx]), legacy_decision)
-    assert np.array_equal(covariate.predict(x[tgt_idx]), legacy.predict(x[tgt_idx]))
-    assert np.array_equal(covariate_full_y.predict(x[tgt_idx]), legacy.predict(x[tgt_idx]))
+    assert np.allclose(covariate.decision_function(x[tgt_idx]), covariate_full_y.decision_function(x[tgt_idx]))
+    assert np.array_equal(covariate.predict(x[tgt_idx]), covariate_full_y.predict(x[tgt_idx]))
+
+
+@pytest.mark.parametrize("estimator_cls", [estimator.ARSVM, estimator.ARRLS])
+def test_artl_rejects_legacy_target_keyword(estimator_cls, office_test_data):
+    x, y, z, _ = office_test_data
+    tgt_idx = np.where(z == 0)
+    src_idx = np.where(z != 0)
+
+    with pytest.raises(TypeError, match="unexpected keyword argument 'Xt'"):
+        estimator_cls().fit(x[src_idx], y[src_idx], Xt=x[tgt_idx])
 
 
 @pytest.mark.parametrize("estimator_cls", [estimator.ARSVM, estimator.ARRLS])
