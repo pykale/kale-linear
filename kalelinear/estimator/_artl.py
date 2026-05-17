@@ -7,9 +7,8 @@ from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.validation import check_is_fitted
 
-from ..utils import infer_backend, lap_norm, mmd_coef, to_backend, to_numpy
-from ..utils.multiclass import score2pred
-from .base import BaseFramework
+from kalelinear.estimator.base import BaseDomainAdaptationEstimator
+from kalelinear.utils import lap_norm, mmd_coef, to_numpy
 
 # =============================================================================
 # Adaptation Regularisation Transfer Learning: ARTL
@@ -19,20 +18,21 @@ from .base import BaseFramework
 # =============================================================================
 
 
-def _init_artl(Xs, ys, Xt=None, yt=None, **kwargs):
+def _init_artl(estimator, Xs, ys, X_target=None, y_target=None, **kwargs):
     """[summary]
 
     Parameters
     ----------
     Xs : array-like
-        Source data, shape (ns_samples, n_features)
+        Source data, shape (n_source_samples, n_features)
     ys : array-like
-        Source labels, shape (ns_samples,)
-    Xt : array-like
-        Target data, shape (nt_samples, n_features), the first ntl
-        samples are labelled if yt is not None
-    yt : array-like, optional
-        Target label, shape (ntl_samples, ), by default None
+        Source labels, shape (n_source_samples,)
+    X_target : array-like
+        Target data, shape (n_target_samples, n_features), the first
+        n_labeled_target_samples samples are labeled and should be aligned
+        with y_target if provided.
+    y_target : array-like, optional
+        Target label, shape (n_labeled_target_samples, ), by default None
 
     Returns
     -------
@@ -50,30 +50,57 @@ def _init_artl(Xs, ys, Xt=None, yt=None, **kwargs):
 
     Xs = to_numpy(Xs)
     ys = to_numpy(ys)
-    Xt = to_numpy(Xt)
-    yt = to_numpy(yt)
-    if type(Xt) is np.ndarray:
-        X = np.concatenate([Xs, Xt], axis=0)
+    X_target = to_numpy(X_target)
+    y_target = to_numpy(y_target)
+    if type(X_target) is np.ndarray:
+        X = np.concatenate([Xs, X_target], axis=0)
         ns = Xs.shape[0]
-        nt = Xt.shape[0]
-        M = mmd_coef(ns, nt, ys, yt, kind="joint")
+        nt = X_target.shape[0]
+        M = mmd_coef(ns, nt, ys, y_target, kind="joint")
     else:
         X = Xs.copy()
         M = np.zeros((X.shape[0], X.shape[0]))
 
-    if yt is not None:
-        y = np.concatenate([ys, yt])
+    if y_target is not None:
+        y = np.concatenate([ys, y_target])
     else:
         y = ys.copy()
-    n = X.shape[0]
-    x_kernel_matrix = pairwise_kernels(X, **kwargs)
-    x_kernel_matrix[np.isnan(x_kernel_matrix)] = 0
-    unit_matrix = np.eye(n)
+    X, y, _, x_kernel_matrix, unit_matrix, _, _ = estimator._prepare_kernel_fit_data(X, y, **kwargs)
 
     return X, y, x_kernel_matrix, M, unit_matrix
 
 
-class ARSVM(BaseFramework):
+def _prepare_artl_fit_data(
+    estimator,
+    X,
+    y,
+    covariates=None,
+    target_covariate=None,
+    unlabeled_value=None,
+    **kwargs,
+):
+    split = estimator._split_source_target_by_covariate(
+        X,
+        y,
+        covariates,
+        target_covariate=target_covariate,
+        unlabeled_value=unlabeled_value,
+    )
+    estimator.source_idx_ = split["source_idx"]
+    estimator.target_idx_ = split["target_idx"]
+    estimator.target_fit_idx_ = split["target_fit_idx"]
+    estimator.target_covariate_ = split["target_covariate"]
+    return _init_artl(
+        estimator,
+        split["Xs"],
+        split["ys"],
+        split["X_target"],
+        split["y_target"],
+        **kwargs,
+    )
+
+
+class ARSVM(BaseDomainAdaptationEstimator):
     def __init__(
         self,
         C=1.0,
@@ -128,28 +155,37 @@ class ARSVM(BaseFramework):
         self._lb = LabelBinarizer(pos_label=1, neg_label=-1)
         # self.scaler = StandardScaler()
 
-    def fit(self, Xs, ys, Xt=None, yt=None):
+    def fit(self, X, y, covariates=None, target_covariate=None, unlabeled_value=None):
         """Fit the model according to the given training data.
 
         Parameters
         ----------
-        Xs : array-like
-            Source data, shape (ns_samples, n_features)
-        ys : array-like
-            Source labels, shape (ns_samples,)
-        Xt : array-like
-            Target data, shape (nt_samples, n_features), the first ntl
-            samples are labelled if yt is not None
-        yt : array-like, optional
-            Target label, shape (ntl_samples, ), by default None
+        X : array-like
+            Source and target data, shape (n_samples, n_features).
+        y : array-like
+            Source labels only, or one label per row in ``X``. If full-length
+            labels include unlabeled target rows, mark them with
+            ``unlabeled_value``.
+        covariates : array-like, optional
+            Binary domain labels aligned with ``X``. The value specified by
+            ``target_covariate`` identifies target rows; all other rows are
+            treated as source rows.
+        target_covariate : scalar, optional
+            Domain value identifying target samples. Defaults to the last
+            sorted unique covariate value.
+        unlabeled_value : scalar, optional
+            Sentinel used for unlabeled target rows when ``y`` is full length.
         """
-        self.backend_ = infer_backend(Xs, ys, Xt, yt)
-        Xs = to_numpy(Xs)
-        ys = to_numpy(ys)
-        Xt = to_numpy(Xt)
-        yt = to_numpy(yt)
-        X, y, x_kernel_matrix, M, unit_matrix = _init_artl(
-            Xs, ys, Xt, yt, metric=self.kernel, filter_params=True, **self.kwargs
+        X, y, x_kernel_matrix, M, unit_matrix = _prepare_artl_fit_data(
+            self,
+            X,
+            y,
+            covariates=covariates,
+            target_covariate=target_covariate,
+            unlabeled_value=unlabeled_value,
+            metric=self.kernel,
+            filter_params=True,
+            **self.kwargs,
         )
 
         y_ = self._lb.fit_transform(y)
@@ -193,11 +229,10 @@ class ARSVM(BaseFramework):
         check_is_fitted(self, "X")
         check_is_fitted(self, "y")
         # x_fit = self.X
-        backend = infer_backend(X)
         x_np = to_numpy(X)
         x_kernel_matrix = pairwise_kernels(x_np, self.X, metric=self.kernel, filter_params=True, **self.kwargs)
         scores = np.dot(x_kernel_matrix, self.coef_)
-        return to_backend(scores, backend, reference=X)  # +self.intercept_
+        return scores  # +self.intercept_
 
     def predict(self, X):
         """Perform classification on samples in X.
@@ -212,39 +247,34 @@ class ARSVM(BaseFramework):
         array-like
             predicted labels, , shape (n_samples, )
         """
-        backend = infer_backend(X)
         dec = to_numpy(self.decision_function(X))
-        if self._lb.y_type_ == "binary":
-            y_pred_ = np.sign(dec).reshape(-1, 1)
-        else:
-            y_pred_ = score2pred(dec)
+        return self._lb.inverse_transform(dec, threshold=0)
 
-        y_pred = self._lb.inverse_transform(to_numpy(y_pred_))
-        return to_backend(y_pred, backend, reference=X)
-
-    def fit_predict(self, Xs, ys, Xt=None, yt=None):
+    def fit_predict(self, X, y, covariates=None, target_covariate=None, unlabeled_value=None):
         """Fit the model according to the given training data and then perform
-            classification on samples in Xt.
+            classification on target samples.
 
         Parameters
         ----------
-        Xs : array-like
-            Source data, shape (ns_samples, n_features)
-        ys : array-like
-            Source labels, shape (ns_samples,)
-        Xt : array-like
-            Target data, shape (nt_samples, n_features), the first ntl
-            samples are labelled if yt is not None
-        yt : array-like, optional
-            Target label, shape (ntl_samples, ), by default None
+        X : array-like
+            Combined source and target data.
+        y : array-like
+            Source labels or full-length labels.
+        covariates : array-like, optional
+            Binary domain labels aligned with ``X``.
         """
-        backend = infer_backend(Xs, ys, Xt, yt)
-        self.fit(Xs, ys, Xt, yt)
-        y_pred = self.predict(self.X)
-        return to_backend(to_numpy(y_pred), backend, reference=Xs if backend == "torch" else None)
+        self.fit(
+            X,
+            y,
+            covariates=covariates,
+            target_covariate=target_covariate,
+            unlabeled_value=unlabeled_value,
+        )
+
+        return self.predict(to_numpy(X)[self.target_idx_])
 
 
-class ARRLS(BaseFramework):
+class ARRLS(BaseDomainAdaptationEstimator):
     def __init__(
         self,
         kernel="linear",
@@ -294,28 +324,35 @@ class ARRLS(BaseFramework):
         self.manifold_metric = manifold_metric
         self._lb = LabelBinarizer(pos_label=1, neg_label=-1)
 
-    def fit(self, Xs, ys, Xt=None, yt=None):
+    def fit(self, X, y, covariates=None, target_covariate=None, unlabeled_value=None):
         """Fit the model according to the given training data.
 
         Parameters
         ----------
-        Xs : array-like
-            Source data, shape (ns_samples, n_features)
-        ys : array-like
-            Source labels, shape (ns_samples,)
-        Xt : array-like
-            Target data, shape (nt_samples, n_features), the first ntl
-            samples are labelled if yt is not None
-        yt : array-like, optional
-            Target label, shape (ntl_samples, ), by default None
+        X : array-like
+            Source and target data, shape (n_samples, n_features).
+        y : array-like
+            Source labels only, or one label per row in ``X``. If full-length
+            labels include unlabeled target rows, mark them with
+            ``unlabeled_value``.
+        covariates : array-like, optional
+            Binary domain labels aligned with ``X``.
+        target_covariate : scalar, optional
+            Domain value identifying target samples. Defaults to the last
+            sorted covariate value.
+        unlabeled_value : scalar, optional
+            Sentinel used for unlabeled target rows when ``y`` is full length.
         """
-        self.backend_ = infer_backend(Xs, ys, Xt, yt)
-        Xs = to_numpy(Xs)
-        ys = to_numpy(ys)
-        Xt = to_numpy(Xt)
-        yt = to_numpy(yt)
-        X, y, x_kernel_matrix, M, unit_matrix = _init_artl(
-            Xs, ys, Xt, yt, metric=self.kernel, filter_params=True, **self.kwargs
+        X, y, x_kernel_matrix, M, unit_matrix = _prepare_artl_fit_data(
+            self,
+            X,
+            y,
+            covariates=covariates,
+            target_covariate=target_covariate,
+            unlabeled_value=unlabeled_value,
+            metric=self.kernel,
+            filter_params=True,
+            **self.kwargs,
         )
         n = x_kernel_matrix.shape[0]
         nl = y.shape[0]
@@ -348,15 +385,8 @@ class ARRLS(BaseFramework):
         array-like
             predicted labels, shape (n_samples)
         """
-        backend = infer_backend(X)
         dec = to_numpy(self.decision_function(X))
-        if self._lb.y_type_ == "binary":
-            y_pred_ = np.sign(dec).reshape(-1, 1)
-        else:
-            y_pred_ = score2pred(dec)
-
-        y_pred = self._lb.inverse_transform(to_numpy(y_pred_))
-        return to_backend(y_pred, backend, reference=X)
+        return self._lb.inverse_transform(dec, threshold=0)
 
     def decision_function(self, X):
         """Evaluates the decision function for the samples in X.
@@ -370,29 +400,30 @@ class ARRLS(BaseFramework):
         array-like
             prediction scores, shape (n_samples)
         """
-        backend = infer_backend(X)
         x_np = to_numpy(X)
         x_kernel_matrix = pairwise_kernels(x_np, self.X, metric=self.kernel, filter_params=True, **self.kwargs)
         scores = np.dot(x_kernel_matrix, self.coef_)
-        return to_backend(scores, backend, reference=X)
+        return scores
 
-    def fit_predict(self, Xs, ys, Xt=None, yt=None):
+    def fit_predict(self, X, y, covariates=None, target_covariate=None, unlabeled_value=None):
         """Fit the model according to the given training data and then perform
-            classification on samples in Xt.
+            classification on target samples.
 
         Parameters
         ----------
-        Xs : array-like
-            Source data, shape (ns_samples, n_features)
-        ys : array-like
-            Source labels, shape (ns_samples,)
-        Xt : array-like
-            Target data, shape (nt_samples, n_features), the first ntl
-            samples are labelled if yt is not None
-        yt : array-like, optional
-            Target label, shape (ntl_samples, ), by default None
+        X : array-like
+            Combined source and target data.
+        y : array-like
+            Source labels or full-length labels.
+        covariates : array-like, optional
+            Binary domain labels aligned with ``X``.
         """
-        backend = infer_backend(Xs, ys, Xt, yt)
-        self.fit(Xs, ys, Xt, yt)
-        y_pred = self.predict(Xt)
-        return to_backend(to_numpy(y_pred), backend, reference=Xt if Xt is not None else Xs)
+        self.fit(
+            X,
+            y,
+            covariates=covariates,
+            target_covariate=target_covariate,
+            unlabeled_value=unlabeled_value,
+        )
+
+        return self.predict(to_numpy(X)[self.target_idx_])
