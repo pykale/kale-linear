@@ -4,3 +4,4 @@ osqp
 pandas
 scikit-learn
 scipy
+tensorly

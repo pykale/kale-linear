@@ -4,27 +4,65 @@ API Reference
 Transformers
 ------------
 
-.. autosummary::
-   :toctree: generated
-   :nosignatures:
+.. autoclass:: kalelinear.transformer.MPCA
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-   kalelinear.transformer.MPCA
-   kalelinear.transformer.TCA
-   kalelinear.transformer.JDA
-   kalelinear.transformer.BDA
-   kalelinear.transformer.MIDA
+.. autoclass:: kalelinear.transformer.TCA
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: kalelinear.transformer.JDA
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: kalelinear.transformer.BDA
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: kalelinear.transformer.MIDA
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Estimators
 ----------
 
-.. autosummary::
-   :toctree: generated
-   :nosignatures:
+.. autoclass:: kalelinear.estimator.LapSVM
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-   kalelinear.estimator.LapSVM
-   kalelinear.estimator.LapRLS
-   kalelinear.estimator.ARSVM
-   kalelinear.estimator.ARRLS
-   kalelinear.estimator.CoIRSVM
-   kalelinear.estimator.CoIRLS
-   kalelinear.estimator.GSDA
+.. autoclass:: kalelinear.estimator.LapRLS
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: kalelinear.estimator.ARSVM
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: kalelinear.estimator.ARRLS
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: kalelinear.estimator.CoIRSVM
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: kalelinear.estimator.CoIRLS
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: kalelinear.estimator.GSDA
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -54,8 +54,15 @@ Install from a local checkout for development:
 pip install -e .[dev]
 ```
 
-Kale-Linear requires Python 3.10 or later. Core dependencies include NumPy,
-SciPy, scikit-learn, pandas, tensorly, cvxopt, and osqp.
+Kale-Linear requires Python 3.10 or later. Core dependencies include:
+
+- [NumPy](http://www.numpy.org/)
+- [SciPy](https://www.scipy.org/)
+- [scikit-learn](http://scikit-learn.org/)
+- [pandas](https://pandas.pydata.org/)
+- [tensorly](http://tensorly.org/)
+- [cvxopt](http://cvxopt.org/)
+- [osqp](https://osqp.org/)
 
 ## Quick Start
 
@@ -87,7 +94,7 @@ z_target = z[domain_labels == 1]
 ```
 
 TCA, JDA, and BDA take domain labels through `covariates`. They do not accept
-separate `Xs` and `Xt` arguments; stack samples into one array and use
+separate source and target arrays; stack samples into one array and use
 `target_covariate` to identify the target domain.
 
 ### Use MIDA with Categorical Covariates
@@ -144,15 +151,15 @@ samples. The labels array may contain only the labeled source examples.
 import numpy as np
 from kalelinear.estimator import LapSVM
 
-xs = np.array([[-2.0, -1.8], [-1.8, -2.1], [1.9, 1.7], [2.1, 2.0]])
+x_source = np.array([[-2.0, -1.8], [-1.8, -2.1], [1.9, 1.7], [2.1, 2.0]])
 ys = np.array([0, 0, 1, 1])
-xt = np.array([[-1.4, -1.2], [-1.2, -1.1], [1.2, 1.1], [1.4, 1.3]])
+x_target = np.array([[-1.4, -1.2], [-1.2, -1.1], [1.2, 1.1], [1.4, 1.3]])
 
-x_train = np.vstack((xs, xt))
+x_train = np.vstack((x_source, x_target))
 
 clf = LapSVM(kernel="linear")
 clf.fit(x_train, ys)
-y_pred = clf.predict(xt)
+y_pred = clf.predict(x_target)
 ```
 
 ## Public API
@@ -163,12 +170,6 @@ from kalelinear.estimator import ARRLS, ARSVM, CoIRLS, CoIRSVM, GSDA, LapRLS, La
 ```
 
 ## Development
-
-Create an editable development environment:
-
-```bash
-pip install -e .[dev]
-```
 
 From the root of the repository, run the following commands in your terminal:
 
@@ -190,6 +191,13 @@ From the root of the repository, run the following commands in your terminal:
    pytest
    ```
 
+4. Build the documentation:
+
+   ```bash
+   pip install -r docs/requirements.txt
+   sphinx-build -b html docs/source docs/build/html
+   ```
+
 
 ## Related Projects
 
@@ -203,5 +211,4 @@ From the root of the repository, run the following commands in your terminal:
 
 ## License
 
-Kale-Linear is released under the MIT License. See [LICENSE](LICENSE) for
-details.
+Kale-Linear is released under the MIT License. See [LICENSE](LICENSE) for details.

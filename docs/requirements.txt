@@ -1,5 +1,3 @@
 nbsphinx
 nbsphinx-link
-recommonmark
 sphinx
-sphinx-rtd-theme
