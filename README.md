@@ -1,10 +1,10 @@
 # Kale-Linear
 
 Kale-Linear is a Python library for non-deep, knowledge-aware machine learning
-from multiple sources, domains, or views. It provides NumPy-based
-implementations of transfer learning, domain adaptation, manifold
-regularization, and group-aware linear learning methods with a scikit-learn
-style API.
+from multiple sources, domains, or views. It provides NumPy-based methods for
+leveraging related data distributions and structural assumptions, including
+transfer learning, domain adaptation, manifold regularization, and group-aware
+learning, through a scikit-learn style API.
 
 The package is part of the PyKale ecosystem and focuses on classical linear and
 kernel methods that are useful when data are structured by domain labels,
@@ -185,7 +185,7 @@ From the root of the repository, run the following commands in your terminal:
    pre-commit run --all-files
    ```
 
-3. Run tests cases to verify functionality:
+3. Run test cases to verify functionality:
 
    ```bash
    pytest
