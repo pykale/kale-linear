@@ -1,68 +1,11 @@
+:orphan:
+
 API Reference
 =============
 
-Transformers
-------------
+This page is kept for existing links. The API reference is now split into the
+following pages:
 
-.. autoclass:: kalelinear.transformer.MPCA
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.transformer.TCA
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.transformer.JDA
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.transformer.BDA
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.transformer.MIDA
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Estimators
-----------
-
-.. autoclass:: kalelinear.estimator.LapSVM
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.estimator.LapRLS
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.estimator.ARSVM
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.estimator.ARRLS
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.estimator.CoIRSVM
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.estimator.CoIRLS
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: kalelinear.estimator.GSDA
-   :members:
-   :undoc-members:
-   :show-inheritance:
+* :doc:`api_transformers`
+* :doc:`api_estimators`
+* :doc:`api_utilities`

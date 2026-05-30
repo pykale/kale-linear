@@ -1,22 +1,41 @@
 Kale-Linear Documentation
 =========================
 
-Kale-Linear is a Python library for non-deep, knowledge-aware machine learning
-from multiple sources, domains, or views. It provides NumPy-based
-implementations of transfer learning, domain adaptation, manifold
-regularization, and group-aware linear learning methods with a scikit-learn
-style API.
+Getting Started
+---------------
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Guide
 
+   introduction
    installation
-   usage
-   api
+   tutorial
+
+Kale-Linear API
+---------------
+
+.. toctree::
+   :maxdepth: 2
+
+   api_transformers
+   api_estimators
+   api_utilities
+
+Kale-Linear APIs above are ordered following the machine learning pipeline,
+i.e., feature embedding transformers, predictive estimators, and reusable
+utilities, rather than alphabetically.
+
+Project
+-------
 
 .. toctree::
    :maxdepth: 1
-   :caption: Project
 
    GitHub repository <https://github.com/pykale/kale-linear>
+
+Indices and Tables
+------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

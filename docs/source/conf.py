@@ -34,7 +34,7 @@ master_doc = "index"
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "generated/*", "Thumbs.db", ".DS_Store"]
 
-html_theme = "classic"
+html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 
