@@ -11,7 +11,7 @@ Install a local checkout for development:
 
 .. code-block:: bash
 
-   pip install -e .[dev]
+   pip install -e ".[dev]"
 
 Kale-Linear requires Python 3.10 or later. Core dependencies include NumPy,
 SciPy, scikit-learn, pandas, tensorly, cvxopt, and osqp.

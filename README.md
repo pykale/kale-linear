@@ -51,7 +51,7 @@ pip install kalelinear
 Install from a local checkout for development:
 
 ```bash
-pip install -e .[dev]
+pip install -e ".[dev]"
 ```
 
 Kale-Linear requires Python 3.10 or later. Core dependencies include:

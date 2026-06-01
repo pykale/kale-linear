@@ -14,10 +14,6 @@ build:
   tools:
     python: "3.11"
 
-# Build documentation in the "docs/" directory with Sphinx. Not used in this project. Keep this for use in the future.
-#sphinx:
-#  configuration: docs/conf.py
-
 # Build documentation via the Python requirements file. Used in this project.
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
 python:
