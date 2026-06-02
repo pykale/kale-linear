@@ -306,9 +306,9 @@ class ARRLS(BaseDomainAdaptationEstimator):
             sample point. The DistanceMetric class gives a list of available
             metrics. By default 'cosine'.
         knn_mode : str, optional
-            {‘connectivity’, ‘distance’}, by default 'distance'. Type of
-            returned matrix: ‘connectivity’ will return the connectivity
-            matrix with ones and zeros, and ‘distance’ will return the
+            {'connectivity', 'distance'}, by default 'distance'. Type of
+            returned matrix: 'connectivity' will return the connectivity
+            matrix with ones and zeros, and 'distance' will return the
             distances between neighbors according to the given metric.
         kwargs:
             kernel param
@@ -376,10 +376,11 @@ class ARRLS(BaseDomainAdaptationEstimator):
     def predict(self, X):
         """Perform classification on samples in X.
 
-        Parameters:
+        Parameters
         ----------
-            X : array-like,
-                shape (n_samples, n_features)
+        X : array-like
+            shape (n_samples, n_features)
+
         Returns
         -------
         array-like
