@@ -27,6 +27,7 @@ example_requires = [
     "ipython",
     "matplotlib",
     "nilearn",
+    "pykale",
     "seaborn",
     "yacs>=0.1.7",
 ]
