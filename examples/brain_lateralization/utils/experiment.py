@@ -31,10 +31,33 @@ LABEL_FILE_LINK = {
     "GSP": "https://zenodo.org/records/10050234/files/gsp_half_brain.csv",
 }
 
-GSDA_INIT_ARGS = ["lr", "max_iter", "l2_hparam", "lambda_", "optimizer", "max_iter"]
-GSDA_FIT_ARGS = ["y", "groups", "target_idx"]
+GSDA_INIT_ARGS = ["lr", "max_iter", "l2_hparam", "lambda_", "optimizer"]
 
-GROUP_DICT = {0: "Male", 1: "Female"}
+GROUP_DICT = {0: "Male", 1: "Female", "mix": "Mix"}
+
+
+def get_gsda_init_kws(lambda_, l2_hparam, extra_kws):
+    init_kws = {"lambda_": lambda_, "l2_hparam": l2_hparam}
+    for arg in GSDA_INIT_ARGS:
+        if arg in extra_kws:
+            init_kws[arg] = extra_kws[arg]
+
+    return init_kws
+
+
+def get_target_groups(mix_group):
+    if mix_group:
+        return ["mix"]
+
+    return [0, 1]
+
+
+def get_fit_kws(y, groups, target_idx=None):
+    return {
+        "y": y,
+        "groups": groups,
+        "target_idx": target_idx,
+    }
 
 
 def run_experiment(cfg, lambda_):
@@ -125,7 +148,7 @@ def run_experiment(cfg, lambda_):
         if 0 < test_size < 1:
             results = run_sub_hold_gsp(**kwargs)
         elif test_size == 0:
-            results = run_sub_hold_gsp(**kwargs)
+            results = run_no_sub_hold_gsp(**kwargs)
         else:
             raise ValueError("Invalid test_size %s." % test_size)
     else:
@@ -149,7 +172,7 @@ def run_experiment(cfg, lambda_):
     # return res_df, out_file
 
 
-def train_modal(
+def train_model(
     x_train,
     init_kws,
     fit_kws,
@@ -266,14 +289,10 @@ def run_no_sub_hold_hcp(
 
                 # scaler = StandardScaler()
                 # scaler.fit(x_train_fold)
-                for tgt_group in [0, 1]:
-                    tgt_idx = np.where(groups == tgt_group)[0]
-                    nt_idx = np.where(groups == 1 - tgt_group)[0]
-
-                    if mix_group:
-                        if tgt_group == 1:
-                            continue
-                        tgt_group = "mix"
+                for tgt_group in get_target_groups(mix_group):
+                    group_idx = 0 if mix_group else tgt_group
+                    tgt_idx = np.where(groups == group_idx)[0]
+                    nt_idx = np.where(groups == 1 - group_idx)[0]
 
                     xy_test = {
                         "acc_tgt_train_session": [
@@ -294,11 +313,7 @@ def run_no_sub_hold_hcp(
                         ],
                     }
 
-                    fit_kws = {
-                        "y": y_train_fold[tgt_idx],
-                        "groups": groups,
-                        "target_idx": tgt_idx,
-                    }
+                    fit_kws = get_fit_kws(y_train_fold[tgt_idx], groups, tgt_idx)
                     model_filename = "HCP_L%s_test_size00_%s_%s_%s_group_%s_%s" % (
                         int(lambda_),
                         train_session,
@@ -309,18 +324,11 @@ def run_no_sub_hold_hcp(
                     )
                     if mix_group:
                         model_filename = model_filename + "_group_mix"
-                        fit_kws = {
-                            "y": y_train_fold,
-                            "groups": groups,
-                            "target_idx": None,
-                        }
+                        fit_kws = get_fit_kws(y_train_fold, groups)
 
-                    init_kws = {"lambda_": lambda_, "l2_hparam": l2_hparam}
-                    for arg in GSDA_INIT_ARGS:
-                        if arg in kwargs:
-                            init_kws[arg] = kwargs[arg]
+                    init_kws = get_gsda_init_kws(lambda_, l2_hparam, kwargs)
 
-                    model = train_modal(
+                    model = train_model(
                         x_train_fold,
                         init_kws,
                         fit_kws,
@@ -383,19 +391,15 @@ def run_sub_hold_hcp(
                 x_train_fold = x_all[train_session][train_fold]
                 y_train_fold = y_all[train_session][train_fold]
 
-                for tgt_group in [0, 1]:
-                    _idx = split_by_group(groups, train_sub, test_sub, tgt_group)
+                for tgt_group in get_target_groups(mix_group):
+                    group_idx = 0 if mix_group else tgt_group
+                    _idx = split_by_group(groups, train_sub, test_sub, group_idx)
                     (
                         train_sub_tgt_idx,
                         train_sub_nt_idx,
                         test_sub_tgt_idx,
                         test_sub_nt_idx,
                     ) = _idx
-
-                    if mix_group:
-                        if tgt_group == 1:
-                            continue
-                        tgt_group = "mix"
 
                     xy_test = {
                         "acc_tgt_train_session": [
@@ -430,11 +434,9 @@ def run_sub_hold_hcp(
                         for _idx in range(2):
                             xy_test[_key][_idx] = np.concatenate(xy_test[_key][_idx])
 
-                    fit_kws = {
-                        "y": y_train_fold[train_sub][train_sub_tgt_idx],
-                        "groups": groups[train_sub],
-                        "target_idx": train_sub_tgt_idx,
-                    }
+                    fit_kws = get_fit_kws(
+                        y_train_fold[train_sub][train_sub_tgt_idx], groups[train_sub], train_sub_tgt_idx
+                    )
                     model_filename = "HCP_L%s_test_size0%s_%s_%s_%s_group_%s_%s" % (
                         int(lambda_),
                         str(int(test_size * 10)),
@@ -448,18 +450,11 @@ def run_sub_hold_hcp(
 
                     if mix_group:
                         model_filename = model_filename + "_group_mix"
-                        fit_kws = {
-                            "y": y_train_fold[train_sub],
-                            "groups": groups[train_sub],
-                            "target_idx": None,
-                        }
+                        fit_kws = get_fit_kws(y_train_fold[train_sub], groups[train_sub])
 
-                    init_kws = {"lambda_": lambda_, "l2_hparam": l2_hparam}
-                    for arg in GSDA_INIT_ARGS:
-                        if arg in kwargs:
-                            init_kws[arg] = kwargs[arg]
+                    init_kws = get_gsda_init_kws(lambda_, l2_hparam, kwargs)
 
-                    model = train_modal(
+                    model = train_model(
                         x_train,
                         init_kws,
                         fit_kws,
@@ -510,8 +505,9 @@ def run_sub_hold_gsp(
             x_test_fold = x_all[1 - train_fold]
             y_test_fold = y_all[1 - train_fold]
 
-            for tgt_group in [0, 1]:
-                _idx = split_by_group(groups, train_sub, test_sub, tgt_group)
+            for tgt_group in get_target_groups(mix_group):
+                group_idx = 0 if mix_group else tgt_group
+                _idx = split_by_group(groups, train_sub, test_sub, group_idx)
                 (
                     train_sub_tgt_idx,
                     train_sub_nt_idx,
@@ -519,21 +515,12 @@ def run_sub_hold_gsp(
                     test_sub_nt_idx,
                 ) = _idx
 
-                if mix_group:
-                    if tgt_group == 1:
-                        continue
-                    tgt_group = "mix"
-
                 x_train_fold_test_tgt = x_test_fold[train_sub][train_sub_tgt_idx]
                 y_train_fold_test_tgt = y_test_fold[train_sub][train_sub_tgt_idx]
                 x_train_fold_test_nt = x_test_fold[train_sub][train_sub_nt_idx]
                 y_train_fold_test_nt = y_test_fold[train_sub][train_sub_nt_idx]
 
-                fit_kws = {
-                    "y": y_train_fold[train_sub_tgt_idx],
-                    "groups": groups,
-                    "target_idx": train_sub_tgt_idx,
-                }
+                fit_kws = get_fit_kws(y_train_fold[train_sub_tgt_idx], groups, train_sub_tgt_idx)
                 model_filename = "GSP_L%s_test_size0%s_%s_%s_group_%s_%s" % (
                     int(lambda_),
                     str(int(test_size * 10)),
@@ -577,11 +564,9 @@ def run_sub_hold_gsp(
                         ],
                     }
                     model_filename = model_filename + "_test_sub_0%s" % str(int(test_size * 10))
-                    fit_kws = {
-                        "y": y_train_fold[train_sub][train_sub_tgt_idx],
-                        "groups": groups[train_sub],
-                        "target_idx": train_sub_tgt_idx,
-                    }
+                    fit_kws = get_fit_kws(
+                        y_train_fold[train_sub][train_sub_tgt_idx], groups[train_sub], train_sub_tgt_idx
+                    )
                 else:
                     x_train = x_train_fold
                     xy_test = {
@@ -592,23 +577,12 @@ def run_sub_hold_gsp(
                 if mix_group:
                     model_filename = model_filename + "_group_mix"
                     if 0 < test_size < 1:
-                        fit_kws = {
-                            "y": y_train_fold[train_sub],
-                            "group": groups[train_sub],
-                            "target_idx": None,
-                        }
+                        fit_kws = get_fit_kws(y_train_fold[train_sub], groups[train_sub])
                     else:
-                        fit_kws = {
-                            "y": y_train_fold,
-                            "group": groups,
-                            "target_idx": None,
-                        }
-                init_kws = {"lambda_": lambda_, "l2_hparam": l2_hparam}
-                for arg in GSDA_INIT_ARGS:
-                    if arg in kwargs:
-                        init_kws[arg] = kwargs[arg]
+                        fit_kws = get_fit_kws(y_train_fold, groups)
+                init_kws = get_gsda_init_kws(lambda_, l2_hparam, kwargs)
 
-                model = train_modal(
+                model = train_model(
                     x_train,
                     init_kws,
                     fit_kws,
@@ -654,25 +628,17 @@ def run_no_sub_hold_gsp(
 
             # scaler = StandardScaler()
             # scaler.fit(x_train)
-            for tgt_group in [0, 1]:
-                tgt_idx = np.where(groups == tgt_group)[0]
-                nt_idx = np.where(groups == 1 - tgt_group)[0]
-
-                if mix_group:
-                    if tgt_group == 1:
-                        continue
-                    tgt_group = "mix"
+            for tgt_group in get_target_groups(mix_group):
+                group_idx = 0 if mix_group else tgt_group
+                tgt_idx = np.where(groups == group_idx)[0]
+                nt_idx = np.where(groups == 1 - group_idx)[0]
 
                 xy_test = {
-                    "acc_tgt": [x_all[1 - i_fold][tgt_idx], x_all[1 - i_fold][tgt_idx]],
-                    "acc_nt": [x_all[1 - i_fold][nt_idx], x_all[1 - i_fold][nt_idx]],
+                    "acc_tgt": [x_all[1 - i_fold][tgt_idx], y_all[1 - i_fold][tgt_idx]],
+                    "acc_nt": [x_all[1 - i_fold][nt_idx], y_all[1 - i_fold][nt_idx]],
                 }
 
-                fit_kws = {
-                    "y": y_train[tgt_idx],
-                    "groups": groups,
-                    "target_idx": tgt_idx,
-                }
+                fit_kws = get_fit_kws(y_train[tgt_idx], groups, tgt_idx)
                 model_filename = "GSP_L%s_test_size00_%s_%s_group_%s_%s" % (
                     int(lambda_),
                     i_split,
@@ -683,17 +649,10 @@ def run_no_sub_hold_gsp(
 
                 if mix_group:
                     model_filename = model_filename + "_group_mix"
-                    fit_kws = {
-                        "y": y_train,
-                        "groups": groups,
-                        "target_idx": None,
-                    }
-                init_kws = {"lambda_": lambda_, "l2_hparam": l2_hparam}
-                for arg in GSDA_INIT_ARGS:
-                    if arg in kwargs:
-                        init_kws[arg] = kwargs[arg]
+                    fit_kws = get_fit_kws(y_train, groups)
+                init_kws = get_gsda_init_kws(lambda_, l2_hparam, kwargs)
 
-                model = train_modal(
+                model = train_model(
                     x_train,
                     init_kws,
                     fit_kws,
