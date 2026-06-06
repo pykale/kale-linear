@@ -11,9 +11,10 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from torch.hub import download_url_to_file
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from utils.io_ import load_half_brain, pick_half, read_tabular
-
 from kalelinear.estimator import GSDA  # , GSLRTorch
+
+from .data_io import read_tabular
+from .half_brain import load_half_brain, pick_half
 
 BASE_RESULT_DICT: dict = {
     "pred_loss": [],
