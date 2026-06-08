@@ -81,8 +81,8 @@ def main():
     yt_pred_ = clf_.predict(xt)
     print("Accuracy on target domain: {:.2f}".format(accuracy_score(yt, yt_pred_)))
 
-    ys_score_ = clf_.decision_function(xs).detach().numpy().reshape(-1)
-    yt_score_ = clf_.decision_function(xt).detach().numpy().reshape(-1)
+    ys_score_ = clf_.decision_function(xs).reshape(-1)
+    yt_score_ = clf_.decision_function(xt).reshape(-1)
     title = "Domain adaptation classifier decision score distribution"
     distplot_1d(
         [ys_score_, yt_score_],

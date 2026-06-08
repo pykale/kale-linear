@@ -23,6 +23,7 @@ install_requires = [
 
 # Dependencies for all examples and tutorials
 example_requires = [
+    "h5py",
     "ipykernel",
     "ipython",
     "matplotlib",

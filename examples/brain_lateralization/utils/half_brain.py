@@ -21,13 +21,13 @@ def download_url_to_file(url, fpath):
 
 
 def split_functional_brain(matrix, connection_type="intra"):
-    n_ = matrix.shape[1] / 2
+    n_ = matrix.shape[1] // 2
     if connection_type == "intra":
         left = matrix[0::2, 0::2]
         right = matrix[1::2, 1::2]
 
         idx = np.triu_indices(n_, k=1)
-        n_feat = int(n_ * (n_ - 1) / 2)
+        n_feat = int(n_ * (n_ - 1) // 2)
         left_vec = np.zeros((1, n_feat))
         right_vec = np.zeros((1, n_feat))
         left_vec[0, :] = left[idx]

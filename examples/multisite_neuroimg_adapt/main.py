@@ -86,7 +86,7 @@ def main():
     print(pd.DataFrame.from_dict(results))
 
     print("Domain Adaptation")
-    estimator = CoIRLS(kernel=cfg.MODEL.KERNEL, lambda_=cfg.MODEL.LAMBDA_, alpha=cfg.MODEL.ALPHA)
+    estimator = CoIRLS(kernel=cfg.MODEL.KERNEL, lambda_=cfg.MODEL.ADAPT_REG, sigma_=cfg.MODEL.L2_REG)
     results = cross_validation.leave_one_group_out(
         brain_networks, pheno["DX_GROUP"].values, pheno["SITE_ID"].values, estimator, use_domain_adaptation=True
     )

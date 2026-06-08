@@ -51,7 +51,7 @@ def main():
 
     # ---- setup dataset ----
     base_dir = cfg.DATASET.BASE_DIR
-    file_format = cfg.DATASET.FILE_FORAMT
+    file_format = cfg.DATASET.FILE_FORMAT
     download_file_by_url(cfg.DATASET.SOURCE, cfg.DATASET.ROOT, "%s.%s" % (base_dir, file_format), file_format)
 
     img_path = os.path.join(cfg.DATASET.ROOT, base_dir, cfg.DATASET.IMG_DIR)

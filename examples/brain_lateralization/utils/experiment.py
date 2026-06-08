@@ -1,6 +1,5 @@
 import copy
 import os
-import sys
 
 # import pickle
 import numpy as np
@@ -10,7 +9,6 @@ from sklearn.metrics import accuracy_score  # , roc_auc_score
 from sklearn.model_selection import StratifiedShuffleSplit
 from torch.hub import download_url_to_file
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from kalelinear.estimator import GSDA  # , GSLRTorch
 
 from .data_io import read_tabular

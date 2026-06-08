@@ -1,7 +1,7 @@
 DATASET:
-  ROOT: "D:/ShareFolder/BNA/Proc"
+  ROOT: "data"
   NUM_REPEAT: 5
 SOLVER:
   SEED: 2022
 OUTPUT:
-  ROOT: 'D:/ShareFolder/BNA/Result'
+  ROOT: 'output'

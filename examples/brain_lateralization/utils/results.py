@@ -29,9 +29,10 @@ def fetch_weights(base_dir, group, lambda_, dataset, sessions, test_size="00", s
                         group,
                         seed_ - seed,
                     )
-                    if os.path.exists(os.path.join(sub_dir, model_file_name)):
-                        weight.append(get_coef(model_file_name, sub_dir).reshape((1, -1)))
-
+                    # if os.path.exists(os.path.join(sub_dir, model_file_name)):
+                    #     weight.append(get_coef(model_file_name, sub_dir).reshape((1, -1)))
+    if not weight:
+        return None
     return np.concatenate(weight, axis=0)
 
 

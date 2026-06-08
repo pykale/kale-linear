@@ -1,11 +1,11 @@
 # Autism Detection: Domain Adaptation for Multi-Site Neuroimaging Data Analysis
 
-### 1. Description
+## 1. Description
 
 This example demonstrates multi-source domain adaptation method with application in neuroimaging data analysis for
 autism detection.
 
-### 2. Materials and Methods
+## 2. Materials and Methods
 
 - Data: Four largest subsets of ABIDE I
 
@@ -15,6 +15,7 @@ autism detection.
 | UM_1   | 106               |
 | UCLA_1 | 72                |
 | USM    | 71                |
+
 - Atlas: CC200
 - Pre-processing pipeline: cpac
 - Classification problem: Autism vs Control
@@ -22,16 +23,13 @@ autism detection.
   1. Constructing brain networks from resting-state fMRI data
   2. Classification with Ridge Classifier or Covariate Independence Regularized Least Squares (CoIRLS) classifier
 
+## 3. Related `kalelinear` API
 
-### 3. Related `kale` API
-
-`kale.interpret.visualize`: Visualize the results of a model.
-
-`kale.pipeline.multi_domain_adapter.CoIRLS`: Covariate Independence Regularized Least Squares (CoIRLS) classifier.
+`kalelinear.estimator.CoIRLS`: Covariate Independence Regularized Least Squares (CoIRLS) classifier.
 
 `kale.utils.download.download_file_by_url`: Download a file from a URL.
 
-### References
+## References
 
 [1] Craddock C., Benhajali Y., Chu C., Chouinard F., Evans A., Jakab A., Khundrakpam BS., Lewis JD., Li Q., Milham M., Yan C. and Bellec P. (2013). [The Neuro Bureau Preprocessing Initiative: Open Sharing of Preprocessed Neuroimaging Data and Derivatives](https://doi.org/10.3389/conf.fninf.2013.09.00041). Frontiers in Neuroinformatics, 7.
 

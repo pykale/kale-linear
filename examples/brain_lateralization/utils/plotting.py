@@ -121,3 +121,87 @@ def load_coef_plot_corr(dataset, group_label, fontsize=14):
         bbox_inches="tight",
     )
     plt.show()
+
+
+def plot_gsi(
+    data,
+    x="lambda",
+    y="GSI",
+    hue="train_gender",
+    fontsize=14,
+    outfile=None,
+    outfig_format=None,
+):
+    """plot GSI boxplot
+    Args:
+        data (pd.DataFrame): data to plot
+        x (str): x-axis variable
+        y (str): y-axis variable
+        hue (str): hue variable
+        fontsize (int): font size
+        outfile (str): output file name without extension
+        outfig_format (str or list): output file format(s), e.g., 'pdf', 'svg', or ['pdf', 'svg']
+    """
+    fig = plt.figure()
+    plt.rcParams.update({"font.size": fontsize})
+    sns.boxplot(data=data, x=x, y=y, hue=hue, showmeans=True)
+    plt.legend(title="Target group")
+    plt.rcParams["text.usetex"] = True
+    plt.xlabel(r"$\lambda$")
+    plt.rcParams["text.usetex"] = False
+    plt.ylabel("Group Specificity Index (GSI)")
+    if outfile is not None:
+        savefig(fig, outfile, outfig_format)
+    plt.show()
+
+
+def plot_accuracy(
+    data,
+    x="Lambda",
+    y="Accuracy",
+    col="Target group",
+    hue="Test set",
+    style="Test set",
+    kind="line",
+    height=4,
+    fontsize=14,
+    outfile=None,
+    outfig_format=None,
+):
+    """plot accuracy line plot
+    Args:
+        data (pd.DataFrame): data to plot
+        x (str): x-axis variable
+        y (str): y-axis variable
+        col (str): column variable
+        hue (str): hue variable
+        style (str): style variable
+        kind (str): kind of plot
+        height (int): height of the plot
+        fontsize (int): font size
+        outfile (str): output file name without extension
+        outfig_format (str or list): output file format(s), e.g., 'pdf', 'svg', or ['pdf', 'svg']
+    """
+    fig = plt.figure()
+    plt.rcParams.update({"font.size": fontsize})
+    g = sns.relplot(
+        data=data,
+        x=x,
+        y=y,
+        col=col,
+        hue=hue,
+        style=style,
+        kind=kind,
+        errorbar=("sd", 1),
+        height=height,
+    )
+    (
+        g.map(plt.axhline, y=0.9, color=".7", dashes=(2, 1), zorder=0)
+        .set_axis_labels(r"$\lambda$", "Test Accuracy")
+        .set_titles("Target group: {col_name}")
+        .tight_layout(w_pad=0)
+    )
+    if outfile is not None:
+        savefig(fig, outfile, outfig_format)
+
+    plt.show()
