@@ -1,13 +1,12 @@
 import copy
 import os
+import pickle
+from urllib.request import urlretrieve
 
-# import pickle
 import numpy as np
 import pandas as pd
-import torch
 from sklearn.metrics import accuracy_score  # , roc_auc_score
 from sklearn.model_selection import StratifiedShuffleSplit
-from torch.hub import download_url_to_file
 
 from kalelinear.estimator import GSDA  # , GSLRTorch
 
@@ -88,7 +87,7 @@ def run_experiment(cfg, lambda_):
         if download:
             os.makedirs(data_dir, exist_ok=True)
             print("Downloading label file for %s dataset. \n" % dataset)
-            download_url_to_file(LABEL_FILE_LINK[dataset], label_fpath)
+            urlretrieve(LABEL_FILE_LINK[dataset], label_fpath)
         else:
             raise ValueError("File %s does not exist" % label_file)
     labels = read_tabular(label_fpath, index_col="ID")
@@ -178,14 +177,16 @@ def train_model(
     out_dir,
     model_filename,
 ):
-    model_path = os.path.join(out_dir, "%s.pt" % model_filename)
+    model_path = os.path.join(out_dir, "%s.pkl" % model_filename)
 
     if os.path.exists(model_path):
-        model = torch.load(model_path)
+        with open(model_path, "rb") as f:
+            model = pickle.load(f)
     else:
         model = GSDA(**init_kws)
         model.fit(x_train, **fit_kws)
-        torch.save(model, model_path)
+        with open(model_path, "wb") as f:
+            pickle.dump(model, f)
         print("Saving trained model to %s. \n" % model_path)
 
     return model

@@ -22,6 +22,8 @@ autism detection.
 - Pipeline:
   1. Constructing brain networks from resting-state fMRI data
   2. Classification with Ridge Classifier or Covariate Independence Regularized Least Squares (CoIRLS) classifier
+- Run:
+  `python main.py --cfg configs/tutorial.yaml`
 
 ## 3. Related `kalelinear` API
 

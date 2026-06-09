@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ def fetch_weights(base_dir, group, lambda_, dataset, sessions, test_size="00", s
         for half_i in halfs:
             for i_split in range(num_repeat):
                 for seed in range(52):
-                    model_file_name = "%s_L%s_test_size%s_%s%s_%s_group_%s_%s.pt" % (
+                    model_file_name = "%s_L%s_test_size%s_%s%s_%s_group_%s_%s.pkl" % (
                         dataset,
                         lambda_,
                         test_size,
@@ -29,18 +30,17 @@ def fetch_weights(base_dir, group, lambda_, dataset, sessions, test_size="00", s
                         group,
                         seed_ - seed,
                     )
-                    # if os.path.exists(os.path.join(sub_dir, model_file_name)):
-                    #     weight.append(get_coef(model_file_name, sub_dir).reshape((1, -1)))
+                    if os.path.exists(os.path.join(sub_dir, model_file_name)):
+                        weight.append(get_coef(model_file_name, sub_dir).reshape((1, -1)))
     if not weight:
         return None
     return np.concatenate(weight, axis=0)
 
 
 def get_coef(file_name, file_dir):
-    import torch
-
     file_path = os.path.join(file_dir, file_name)
-    model = torch.load(file_path)
+    with open(file_path, "rb") as f:
+        model = pickle.load(f)
     return model.theta
 
 

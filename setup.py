@@ -27,6 +27,7 @@ example_requires = [
     "ipykernel",
     "ipython",
     "matplotlib",
+    "nibabel",
     "nilearn",
     "pykale",
     "seaborn",
