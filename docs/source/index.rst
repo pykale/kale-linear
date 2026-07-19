@@ -17,7 +17,9 @@ Kale-Linear API
 .. toctree::
    :maxdepth: 2
 
+   api_embed
    api_transformers
+   api_predict
    api_estimators
    api_utilities
 
