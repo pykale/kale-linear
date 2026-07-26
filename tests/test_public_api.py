@@ -1,19 +1,19 @@
-from kalelinear import embed, predict
+from kalelinear import embed, estimator, predict, transformer
 
 
 def test_embed_module_exposes_transformers():
-    assert embed.TCA.__name__ == "TCA"
-    assert embed.JDA.__name__ == "JDA"
-    assert embed.BDA.__name__ == "BDA"
-    assert embed.MIDA.__name__ == "MIDA"
-    assert embed.MPCA.__name__ == "MPCA"
+    assert embed.TCA is transformer.TCA
+    assert embed.JDA is transformer.JDA
+    assert embed.BDA is transformer.BDA
+    assert embed.MIDA is transformer.MIDA
+    assert embed.MPCA is transformer.MPCA
 
 
 def test_predict_module_exposes_estimators():
-    assert predict.ARSVM.__name__ == "ARSVM"
-    assert predict.ARRLS.__name__ == "ARRLS"
-    assert predict.CoIRSVM.__name__ == "CoIRSVM"
-    assert predict.CoIRLS.__name__ == "CoIRLS"
-    assert predict.GSDA.__name__ == "GSDA"
-    assert predict.LapSVM.__name__ == "LapSVM"
-    assert predict.LapRLS.__name__ == "LapRLS"
+    assert predict.ARSVM is estimator.ARSVM
+    assert predict.ARRLS is estimator.ARRLS
+    assert predict.CoIRSVM is estimator.CoIRSVM
+    assert predict.CoIRLS is estimator.CoIRLS
+    assert predict.GSDA is estimator.GSDA
+    assert predict.LapSVM is estimator.LapSVM
+    assert predict.LapRLS is estimator.LapRLS
