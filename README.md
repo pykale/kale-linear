@@ -1,16 +1,14 @@
-# Kale-Linear
+<p align="center">
+<img src="docs/images/kalelinear.png" width="40%" alt="kalelinear logo" />
+</p>
 
-Kale-Linear is a Python library for non-deep, knowledge-aware machine learning
-from multiple sources, domains, or views. It provides NumPy-based methods for
-leveraging related data distributions and structural assumptions, including
-transfer learning, domain adaptation, manifold regularization, and group-aware
-learning, through a scikit-learn style API.
+# kalelinear
 
-The package is part of the PyKale ecosystem and focuses on classical linear and
-kernel methods that are useful when data are structured by domain labels,
-covariates, side information, or unlabeled target samples.
+`kalelinear` is a Python library for learning harmonized or individualized models from multi-source/multi-view data in linear or reproducing kernel Hilbert spaces (RKHS). It provides NumPy-based methods for leveraging related data distributions and structural assumptions, including transfer learning, domain adaptation, manifold regularization, and group-aware learning, through a [`scikit-learn`](https://github.com/scikit-learn/scikit-learn) style API.
 
-## Features
+The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem and focuses on classical linear and kernel methods that are useful when data are structured by domain labels, covariates, side information, or unlabeled target samples.
+
+## Methods implemented
 
 - Transformer models for learning feature embeddings:
   - Multilinear Principal Component Analysis (MPCA): Lu et al., 2008
@@ -197,7 +195,6 @@ From the root of the repository, run the following commands in your terminal:
    pip install -r docs/requirements.txt
    sphinx-build -b html docs/source docs/build/html
    ```
-
 
 ## Related Projects
 
