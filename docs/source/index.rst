@@ -33,7 +33,8 @@ Project
 .. toctree::
    :maxdepth: 1
 
-   GitHub repository <https://github.com/pykale/kale-linear>
+   Read the Docs (PyKale subproject) <https://pykale.readthedocs.io/projects/linear/>
+   GitHub repository <https://github.com/pykale/linear>
 
 Indices and Tables
 ------------------

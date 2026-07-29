@@ -1,7 +1,7 @@
 """
 kalelinear.
 
-Non-deep learning for multi-view/multi-source data.
+Learning harmonized or individualized models from multi-source/multi-view data in linear or reproducing kernel Hilbert spaces (RKHS).
 """
 
 from importlib import import_module

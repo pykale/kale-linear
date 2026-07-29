@@ -1,1 +1,1 @@
-"""Test package for kale-linear."""
+"""Test package for kalelinear."""

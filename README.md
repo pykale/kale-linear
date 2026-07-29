@@ -1,12 +1,18 @@
 <p align="center">
-<img src="docs/images/kalelinear.png" width="40%" alt="kalelinear logo" />
+<img src="docs/images/kalelinear.jpg" width="60%" alt="kalelinear logo" />
 </p>
 
-# kalelinear
+<!-- [![tests](https://github.com/pykale/linear/workflows/test/badge.svg)](https://github.com/pykale/linear/actions/workflows/test.yml) -->
+<!-- [![codecov](https://codecov.io/gh/pykale/linear/branch/main/graph/badge.svg?token=jmIYPbA2le)](https://codecov.io/gh/pykale/linear) -->
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/pykale/linear/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org)
+[![PyPI version](https://img.shields.io/pypi/v/kalelinear?color=blue)](https://pypi.org/project/kalelinear/)
+[![PyPI downloads](https://pepy.tech/badge/kalelinear)](https://pepy.tech/project/kalelinear)
+
 
 `kalelinear` is a Python library for learning harmonized or individualized models from multi-source/multi-view data in linear or reproducing kernel Hilbert spaces (RKHS). It provides NumPy-based methods for leveraging related data distributions and structural assumptions, including transfer learning, domain adaptation, manifold regularization, and group-aware learning, through a [`scikit-learn`](https://github.com/scikit-learn/scikit-learn) style API.
 
-The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem and focuses on classical linear and kernel methods that are useful when data are structured by domain labels, covariates, side information, or unlabeled target samples.
+The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem and focuses on linear and kernel methods for data characterized by covariates (e.g., domain labels, group labels, side information), unlabeled target samples, or tensor structures.
 
 ## Methods implemented
 
