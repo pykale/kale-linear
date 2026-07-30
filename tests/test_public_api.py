@@ -1,3 +1,4 @@
+import kalelinear
 from kalelinear import embed, estimator, predict, transformer
 
 
@@ -17,3 +18,10 @@ def test_predict_module_exposes_estimators():
     assert predict.GSDA is estimator.GSDA
     assert predict.LapSVM is estimator.LapSVM
     assert predict.LapRLS is estimator.LapRLS
+
+
+def test_lazy_modules_are_cached_on_package():
+    assert kalelinear.transformer is transformer
+    assert kalelinear.estimator is estimator
+    assert kalelinear.embed is embed
+    assert kalelinear.predict is predict

@@ -70,6 +70,8 @@ setup(
     name="kalelinear",
     version="0.1.0a1",
     description="Non-deep knowledge-aware machine learning from multiple sources/views in Python",
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     url="https://github.com/pykale/linear",
     author="The PyKale team",
     author_email="pykale-group@sheffield.ac.uk",
