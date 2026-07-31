@@ -1,3 +1,5 @@
+import sys
+
 import kalelinear
 from kalelinear import embed, estimator, predict, transformer
 
@@ -25,3 +27,22 @@ def test_lazy_modules_are_cached_on_package():
     assert kalelinear.estimator is estimator
     assert kalelinear.embed is embed
     assert kalelinear.predict is predict
+
+
+def test_lazy_attribute_load_triggers_getattr():
+    # Remove cached entries to simulate a cold attribute access through __getattr__.
+    # A plain `from kalelinear import embed` bypasses __getattr__ via submodule
+    # fallback, so this is the only way to actually exercise the lazy-load path.
+    for name in ("embed", "predict"):
+        kalelinear.__dict__.pop(name, None)
+        sys.modules.pop(f"kalelinear.{name}", None)
+
+    loaded_embed = kalelinear.embed
+    assert loaded_embed is sys.modules["kalelinear.embed"]
+
+    loaded_predict = kalelinear.predict
+    assert loaded_predict is sys.modules["kalelinear.predict"]
+
+    # Second access must return the same cached object without re-importing.
+    assert kalelinear.embed is loaded_embed
+    assert kalelinear.predict is loaded_predict

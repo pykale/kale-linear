@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/pykale/linear/tree/main/docs/images/kalelinear.jpg" width="60%" alt="kalelinear logo" />
+<img src="https://github.com/pykale/linear/raw/main/docs/images/kalelinear.jpg" width="60%" alt="kalelinear logo" />
 </p>
 
 <!-- [![tests](https://github.com/pykale/linear/workflows/test/badge.svg)](https://github.com/pykale/linear/actions/workflows/test.yml) -->
