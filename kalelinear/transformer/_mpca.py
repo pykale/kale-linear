@@ -176,6 +176,7 @@ class MPCA(BaseEstimator, TransformerMixin):
         """
 
         shape_ = X.shape  # shape of input data
+        n_samples = shape_[0]
         n_dims = X.ndim
 
         self.shape_in = shape_[1:]
@@ -184,12 +185,21 @@ class MPCA(BaseEstimator, TransformerMixin):
 
         # init
         shape_out = ()
-        proj_mats = []
+        proj_matrices = []
+        covariance_matrices = dict()
+
+        for i in range(1, n_dims):
+            for j in range(n_samples):
+                sample_data_unfold = unfold(X[j], mode=(i - 1))
+                covariance_ij = sample_data_unfold @ sample_data_unfold.T
+                if i not in covariance_matrices.keys():
+                    covariance_matrices[i] = covariance_ij
+                else:
+                    covariance_matrices[i] = covariance_matrices[i] + covariance_ij
 
         # get the output tensor shape based on the cumulative distribution of eigen values for each mode
         for i in range(1, n_dims):
-            mode_data_mat = unfold(X, mode=i)
-            singular_vec_left, singular_val, singular_vec_right = la.svd(mode_data_mat, full_matrices=False)
+            singular_vec_left, singular_val, singular_vec_right = la.svd(covariance_matrices[i])
             eig_values = np.square(singular_val)
             idx_sorted = (-1 * eig_values).argsort()
             cum = eig_values[idx_sorted]
@@ -199,13 +209,13 @@ class MPCA(BaseEstimator, TransformerMixin):
                 if np.sum(cum[:j]) / tot_var > self.var_ratio:
                     shape_out += (j,)
                     break
-            proj_mats.append(singular_vec_left[:, idx_sorted][:, : shape_out[i - 1]].T)
+            proj_matrices.append(singular_vec_left[:, idx_sorted][:, : shape_out[i - 1]].T)
 
         for i_iter in range(self.max_iter):
             for i in range(1, n_dims):  # ith mode
                 x_projected = multi_mode_dot(
                     X,
-                    [proj_mats[m] for m in range(n_dims - 1) if m != i - 1],
+                    [proj_matrices[m] for m in range(n_dims - 1) if m != i - 1],
                     modes=[m for m in range(1, n_dims) if m != i],
                 )
                 mode_data_mat = unfold(x_projected, i)
@@ -213,15 +223,15 @@ class MPCA(BaseEstimator, TransformerMixin):
                 singular_vec_left, singular_val, singular_vec_right = la.svd(mode_data_mat, full_matrices=False)
                 eig_values = np.square(singular_val)
                 idx_sorted = (-1 * eig_values).argsort()
-                proj_mats[i - 1] = (singular_vec_left[:, idx_sorted][:, : shape_out[i - 1]]).T
+                proj_matrices[i - 1] = (singular_vec_left[:, idx_sorted][:, : shape_out[i - 1]]).T
 
-        x_projected = multi_mode_dot(X, proj_mats, modes=[m for m in range(1, n_dims)])
+        x_projected = multi_mode_dot(X, proj_matrices, modes=[m for m in range(1, n_dims)])
         x_proj_unfold = unfold(x_projected, mode=0)  # unfold the tensor projection to shape (n_samples, n_features)
         # x_proj_cov = np.diag(np.dot(x_proj_unfold.T, x_proj_unfold))  # covariance of unfolded features
         x_proj_cov = np.sum(np.multiply(x_proj_unfold.T, x_proj_unfold.T), axis=1)  # memory saving computing covariance
         idx_order = (-1 * x_proj_cov).argsort()
 
-        self.proj_mats = proj_mats
+        self.proj_mats = proj_matrices
         self.idx_order = idx_order
         self.shape_out = shape_out
         self.n_dims = n_dims
