@@ -12,10 +12,36 @@ import logging
 import warnings
 
 import numpy as np
-import scipy.linalg as la
+from numpy.linalg import eigvalsh
+from scipy.linalg import eigh
 from sklearn.base import BaseEstimator, TransformerMixin
 from tensorly.base import fold, unfold
 from tensorly.tenalg import multi_mode_dot
+
+_CHUNK_ELEMS = 4000000  # target number of float64 elements per processed chunk (~32 MB)
+
+
+def _chunk_size(n_samples, elems_per_sample, chunk_elems=_CHUNK_ELEMS):
+    """Return the largest chunk keeping per-chunk element count under ``chunk_elems``.
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples in the data.
+    elems_per_sample : int
+        Number of array elements contributed by a single sample (e.g. the
+        number of features of the input or unfolded tensor).
+    chunk_elems : int, default=4000000
+        Memory budget in number of elements for one processed chunk.
+
+    Returns
+    -------
+    chunk_size : int
+        Number of samples to process at a time.
+    """
+    if elems_per_sample <= 0:
+        return n_samples
+    return min(n_samples, max(1, chunk_elems // elems_per_sample))
 
 
 def _check_n_dim(X, n_dims):
@@ -98,9 +124,9 @@ class MPCA(BaseEstimator, TransformerMixin):
         Feature ranking indices by descending projected variance.
     mean_ : ndarray
         Per-feature empirical mean of the training data.
-    shape_in : tuple
+    sample_shape : tuple
         Input per-sample tensor shape.
-    shape_out : tuple
+    modewise_n_components : tuple
         Output per-sample tensor shape after projection.
 
     References
@@ -179,61 +205,83 @@ class MPCA(BaseEstimator, TransformerMixin):
         n_samples = shape_[0]
         n_dims = X.ndim
 
-        self.shape_in = shape_[1:]
-        self.mean_ = np.mean(X, axis=0)
-        X = X - self.mean_
+        self.sample_shape = shape_[1:]
 
-        # init
-        shape_out = ()
-        proj_matrices = []
-        covariance_matrices = dict()
+        # Samples are processed in chunks so that a centered copy of the full
+        # data never has to be materialized and disk-backed inputs (e.g. a
+        # memory-mapped array or a loader over file paths) are read one chunk
+        # at a time.
+        n_features_in = int(np.prod(shape_[1:]))
+        chunk_size = _chunk_size(n_samples, n_features_in)
 
+        mean_acc = np.zeros(shape_[1:], dtype=np.float64)
+        for start in range(0, n_samples, chunk_size):
+            mean_acc += X[start : start + chunk_size].sum(axis=0, dtype=np.float64)
+        self.mean_ = mean_acc / n_samples
+
+        # init: accumulate per-mode covariance over chunked unfoldings
+        covariance_matrices = {}
         for i in range(1, n_dims):
-            for j in range(n_samples):
-                sample_data_unfold = unfold(X[j], mode=(i - 1))
-                covariance_ij = sample_data_unfold @ sample_data_unfold.T
-                if i not in covariance_matrices.keys():
-                    covariance_matrices[i] = covariance_ij
-                else:
-                    covariance_matrices[i] = covariance_matrices[i] + covariance_ij
+            mode_cov = np.zeros((shape_[i], shape_[i]))
+            for start in range(0, n_samples, chunk_size):
+                batch = X[start : start + chunk_size] - self.mean_
+                batch_unfold = unfold(batch, mode=i)
+                mode_cov += batch_unfold @ batch_unfold.T
+            covariance_matrices[i] = mode_cov
 
         # get the output tensor shape based on the cumulative distribution of eigen values for each mode
-        for i in range(1, n_dims):
-            singular_vec_left, singular_val, singular_vec_right = la.svd(covariance_matrices[i])
-            eig_values = np.square(singular_val)
-            idx_sorted = (-1 * eig_values).argsort()
-            cum = eig_values[idx_sorted]
+        modewise_n_components = ()
+        proj_matrices = []
+        for mode_i in range(1, n_dims):
+            eigenvalues = eigvalsh(covariance_matrices[mode_i])
+            idx_sorted = np.argsort(eigenvalues)[::-1]
+            cum = eigenvalues[idx_sorted]
             tot_var = np.sum(cum)
 
-            for j in range(1, cum.shape[0] + 1):
-                if np.sum(cum[:j]) / tot_var > self.var_ratio:
-                    shape_out += (j,)
-                    break
-            proj_matrices.append(singular_vec_left[:, idx_sorted][:, : shape_out[i - 1]].T)
+            cum_var = np.cumsum(cum)
+            mode_n_components = min(
+                int(np.searchsorted(cum_var, self.var_ratio * tot_var, side="right")) + 1, shape_[mode_i]
+            )
+            modewise_n_components += (mode_n_components,)
 
-        for i_iter in range(self.max_iter):
-            for i in range(1, n_dims):  # ith mode
-                x_projected = multi_mode_dot(
-                    X,
-                    [proj_matrices[m] for m in range(n_dims - 1) if m != i - 1],
-                    modes=[m for m in range(1, n_dims) if m != i],
+            # Only the j largest eigenvectors are needed; scipy eigh returns them in
+            # ascending eigenvalue order for the requested index range.
+            _, eigenvectors = eigh(
+                covariance_matrices[mode_i], subset_by_index=[shape_[mode_i] - mode_n_components, shape_[mode_i] - 1]
+            )
+            proj_matrices.append(eigenvectors[:, ::-1].T)
+
+        for _iter in range(self.max_iter):
+            for mode_i in range(1, n_dims):  # ith mode
+                mode_cov_mat = np.zeros((shape_[mode_i], shape_[mode_i]))
+                proj_other = [proj_matrices[m] for m in range(n_dims - 1) if m != mode_i - 1]
+                modes_other = [m for m in range(1, n_dims) if m != mode_i]
+                for start in range(0, n_samples, chunk_size):
+                    batch = X[start : start + chunk_size] - self.mean_
+                    batch_proj = multi_mode_dot(batch, proj_other, modes=modes_other)
+                    batch_unfold = unfold(batch_proj, mode=mode_i)
+                    mode_cov_mat += batch_unfold @ batch_unfold.T
+
+                _, eigenvectors = eigh(
+                    mode_cov_mat,
+                    subset_by_index=[shape_[mode_i] - modewise_n_components[mode_i - 1], shape_[mode_i] - 1],
                 )
-                mode_data_mat = unfold(x_projected, i)
+                proj_matrices[mode_i - 1] = eigenvectors[:, ::-1].T
 
-                singular_vec_left, singular_val, singular_vec_right = la.svd(mode_data_mat, full_matrices=False)
-                eig_values = np.square(singular_val)
-                idx_sorted = (-1 * eig_values).argsort()
-                proj_matrices[i - 1] = (singular_vec_left[:, idx_sorted][:, : shape_out[i - 1]]).T
-
-        x_projected = multi_mode_dot(X, proj_matrices, modes=[m for m in range(1, n_dims)])
-        x_proj_unfold = unfold(x_projected, mode=0)  # unfold the tensor projection to shape (n_samples, n_features)
-        # x_proj_cov = np.diag(np.dot(x_proj_unfold.T, x_proj_unfold))  # covariance of unfolded features
-        x_proj_cov = np.sum(np.multiply(x_proj_unfold.T, x_proj_unfold.T), axis=1)  # memory saving computing covariance
-        idx_order = (-1 * x_proj_cov).argsort()
+        # variance of the projected features, accumulated per chunk so the full
+        # unfolded projection never has to be materialized
+        x_proj_var = np.zeros(int(np.prod(modewise_n_components)))
+        modes_all = [m for m in range(1, n_dims)]
+        for start in range(0, n_samples, chunk_size):
+            batch = X[start : start + chunk_size] - self.mean_
+            batch_proj = multi_mode_dot(batch, proj_matrices, modes=modes_all)
+            batch_unfold = unfold(batch_proj, mode=0)  # unfold the chunked projection to shape (n_chunk, n_features)
+            x_proj_var += np.einsum("ij,ij->j", batch_unfold, batch_unfold)
+        idx_order = np.argsort(-x_proj_var)
 
         self.proj_mats = proj_matrices
         self.idx_order = idx_order
-        self.shape_out = shape_out
+        self.modewise_n_components = modewise_n_components
         self.n_dims = n_dims
 
         return self
@@ -256,7 +304,7 @@ class MPCA(BaseEstimator, TransformerMixin):
         # reshape X to shape (1, I_1, I_2, ..., I_N) if X in shape (I_1, I_2, ..., I_N), i.e. n_samples = 1
         if X.ndim == self.n_dims - 1:
             X = X.reshape((1,) + X.shape)
-        _check_tensor_dim_shape(X, self.n_dims, self.shape_in)
+        _check_tensor_dim_shape(X, self.n_dims, self.sample_shape)
         X = X - self.mean_
 
         # projected tensor in lower dimensions
@@ -267,7 +315,7 @@ class MPCA(BaseEstimator, TransformerMixin):
             x_projected = unfold(x_projected, mode=0)
             x_projected = x_projected[:, self.idx_order]
             if isinstance(n_components, int):
-                n_features = int(np.prod(self.shape_out))
+                n_features = int(np.prod(self.modewise_n_components))
                 if n_components > n_features:
                     warn_msg = (
                         "n_components %d exceeds the maximum number, all features will be returned." % n_components
@@ -292,22 +340,22 @@ class MPCA(BaseEstimator, TransformerMixin):
         x_rec : ndarray of shape (n_samples, I_1, ..., I_N)
             Reconstructed tensor data in the original shape.
         """
-        # reshape X to tensor in shape (n_samples, self.shape_out) if X has been unfolded
+        # reshape X to tensor in shape (n_samples, self.modewise_n_components) if X has been unfolded
         if X.ndim <= 2:
             if X.ndim == 1:
                 # reshape X to a 2D matrix (1, n_components) if X in shape (n_components,)
                 X = X.reshape((1, -1))
             n_samples = X.shape[0]
             n_features = X.shape[1]
-            if n_features <= np.prod(self.shape_out):
-                x_ = np.zeros((n_samples, np.prod(self.shape_out)))
+            if n_features <= np.prod(self.modewise_n_components):
+                x_ = np.zeros((n_samples, np.prod(self.modewise_n_components)))
                 x_[:, self.idx_order[:n_features]] = X[:]
             else:
                 msg = "Feature dimension exceeds the shape upper limit."
                 logging.error(msg)
                 raise ValueError(msg)
 
-            X = fold(x_, mode=0, shape=((n_samples,) + self.shape_out))
+            X = fold(x_, mode=0, shape=((n_samples,) + self.modewise_n_components))
 
         x_rec = multi_mode_dot(X, self.proj_mats, modes=[m for m in range(1, self.n_dims)], transpose=True)
 
