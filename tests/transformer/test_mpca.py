@@ -30,11 +30,11 @@ def baseline_model(download_path):
 
 
 @pytest.mark.parametrize("n_components", N_COMPS)
-@pytest.mark.parametrize("var_ratio", VAR_RATIOS)
-def test_mpca(var_ratio, n_components, gait):
+@pytest.mark.parametrize("explained_variance_ratio", VAR_RATIOS)
+def test_mpca(explained_variance_ratio, n_components, gait):
     # basic mpca test, return tensor
     x = gait["fea3D"].transpose((3, 0, 1, 2))
-    mpca = MPCA(var_ratio=var_ratio, vectorize=False)
+    mpca = MPCA(explained_variance_ratio=explained_variance_ratio, vectorize=False)
     x_proj = mpca.fit(x).transform(x)
 
     testing.assert_equal(x_proj.ndim, x.ndim)
@@ -74,7 +74,7 @@ def test_mpca_against_baseline(gait, baseline_model):
     x = gait["fea3D"].transpose((3, 0, 1, 2))
     baseline_proj_mats = [baseline_model["tUs"][i][0] for i in range(baseline_model["tUs"].size)]
     baseline_mean = baseline_model["TXmean"]
-    mpca = MPCA(var_ratio=0.97)
+    mpca = MPCA(explained_variance_ratio=0.97)
     x_proj = mpca.fit(x).transform(x)
     testing.assert_allclose(baseline_mean, mpca.mean_)
     baseline_proj_x = multi_mode_dot(x - baseline_mean, baseline_proj_mats, modes=[1, 2, 3])

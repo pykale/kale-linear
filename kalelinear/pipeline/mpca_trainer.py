@@ -37,7 +37,7 @@ classifiers = {
 
 # k-fold cross-validation used for grid search, i.e. searching for optimal value of C
 default_search_params = {"cv": 5}
-default_mpca_params = {"var_ratio": 0.97, "vectorize": True}
+default_mpca_params = {"explained_variance_ratio": 0.97, "vectorize": True}
 
 
 class MPCATrainer(BaseEstimator, ClassifierMixin):
@@ -55,8 +55,9 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
             1. svc, {"kernel": ["linear"], "C": [0.0001, 0.001, 0.01, 0.1, 1, 10, 100], "max_iter": [50000]},
             2. linear_svc, {"C": [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]},
             3. lr, {"C": [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]}
-        mpca_params (dict, optional): Parameters of MPCA, e.g., {"var_ratio": 0.8}. Defaults to None, i.e., using the
-            default parameters (https://pykale.readthedocs.io/en/latest/kale.embed.html#module-kale.embed.mpca).
+        mpca_params (dict, optional): Parameters of MPCA, e.g., {"explained_variance_ratio": 0.8}. Defaults to None,
+            i.e., using the default parameters
+            (https://pykale.readthedocs.io/en/latest/kale.embed.html#module-kale.embed.mpca).
         n_features (int, optional): Number of features for feature selection. Defaults to None, i.e., all features
             after dimension reduction will be used.
         search_params (dict, optional): Parameters of grid search, for more detail please see

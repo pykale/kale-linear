@@ -107,7 +107,7 @@ class MPCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    var_ratio : float, default=0.97
+    explained_variance_ratio : float, default=0.97
         Target cumulative explained variance ratio per mode.
     max_iter : int, default=1
         Maximum number of alternating optimization iterations.
@@ -115,6 +115,11 @@ class MPCA(BaseEstimator, TransformerMixin):
         If ``True``, output projected tensors as vectors.
     n_components : int, optional
         Number of output features when ``vectorize=True``.
+    output_shape : tuple of int, optional
+        Number of components to keep per mode. If given, it overrides
+        ``explained_variance_ratio`` and the output dimensions are set exactly.
+        Default is None, i.e. the output shape is derived from
+        ``explained_variance_ratio``.
 
     Attributes
     ----------
@@ -124,10 +129,14 @@ class MPCA(BaseEstimator, TransformerMixin):
         Feature ranking indices by descending projected variance.
     mean_ : ndarray
         Per-feature empirical mean of the training data.
-    sample_shape : tuple
+    input_shape : tuple
         Input per-sample tensor shape.
-    modewise_n_components : tuple
-        Output per-sample tensor shape after projection.
+    output_shape_ : tuple
+        Output per-sample tensor shape after projection. Equals
+        ``output_shape`` when given, otherwise determined by
+        ``explained_variance_ratio``.
+    explained_variance_ratio_ : tuple of float
+        Achieved cumulative explained variance ratio per mode after fitting.
 
     References
     ----------
@@ -152,13 +161,15 @@ class MPCA(BaseEstimator, TransformerMixin):
         >>> x_projected = mpca.transform(x)
         >>> x_projected.shape
         (40, 50)
-        >>> x_rec = mpca.inverse_transform(x_projected)
-        >>> x_rec.shape
+        >>> x_reconstructed = mpca.inverse_transform(x_projected)
+        >>> x_reconstructed.shape
         (40, 20, 25, 20)
     """
 
-    def __init__(self, var_ratio=0.97, max_iter=1, vectorize=False, n_components=None):
-        self.var_ratio = var_ratio
+    def __init__(
+        self, explained_variance_ratio=0.97, max_iter=1, vectorize=False, n_components=None, output_shape=None
+    ):
+        self.explained_variance_ratio = explained_variance_ratio
         if max_iter > 0 and isinstance(max_iter, int):
             self.max_iter = max_iter
         else:
@@ -168,6 +179,16 @@ class MPCA(BaseEstimator, TransformerMixin):
         self.proj_mats = []
         self.vectorize = vectorize
         self.n_components = n_components
+        if output_shape is None:
+            self.output_shape = None
+        elif isinstance(output_shape, (tuple, list)) and all(
+            isinstance(v, (int, np.integer)) and v > 0 for v in output_shape
+        ):
+            self.output_shape = tuple(int(v) for v in output_shape)
+        else:
+            msg = "output_shape must be None or a sequence of positive integers but given %s" % (output_shape,)
+            logging.error(msg)
+            raise ValueError(msg)
 
     def fit(self, X, y=None):
         """Fit MPCA to tensor data.
@@ -205,7 +226,7 @@ class MPCA(BaseEstimator, TransformerMixin):
         n_samples = shape_[0]
         n_dims = X.ndim
 
-        self.sample_shape = shape_[1:]
+        self.input_shape = shape_[1:]
 
         # Samples are processed in chunks so that a centered copy of the full
         # data never has to be materialized and disk-backed inputs (e.g. a
@@ -229,26 +250,56 @@ class MPCA(BaseEstimator, TransformerMixin):
                 mode_cov += batch_unfold @ batch_unfold.T
             covariance_matrices[i] = mode_cov
 
-        # get the output tensor shape based on the cumulative distribution of eigen values for each mode
-        modewise_n_components = ()
+        # get the output tensor shape: either user-specified or derived from the
+        # cumulative distribution of eigen values for each mode
+        if self.output_shape is not None:
+            output_shape = self.output_shape
+            if len(output_shape) != n_dims - 1:
+                error_msg = "output_shape must have length %s (one entry per mode) but has %s" % (
+                    n_dims - 1,
+                    len(output_shape),
+                )
+                logging.error(error_msg)
+                raise ValueError(error_msg)
+            for mode_i, n_comp in enumerate(output_shape, start=1):
+                if n_comp > shape_[mode_i]:
+                    error_msg = "output_shape entry %s must not exceed the input size %s of mode %s but is %s" % (
+                        mode_i - 1,
+                        shape_[mode_i],
+                        mode_i,
+                        n_comp,
+                    )
+                    logging.error(error_msg)
+                    raise ValueError(error_msg)
+        else:
+            output_shape = ()
+
         proj_matrices = []
+        explained_variance_ratios = []
         for mode_i in range(1, n_dims):
-            eigenvalues = eigvalsh(covariance_matrices[mode_i])
-            idx_sorted = np.argsort(eigenvalues)[::-1]
-            cum = eigenvalues[idx_sorted]
-            tot_var = np.sum(cum)
+            if self.output_shape is None:
+                eigenvalues = eigvalsh(covariance_matrices[mode_i])
+                idx_sorted = np.argsort(eigenvalues)[::-1]
+                cum = eigenvalues[idx_sorted]
+                tot_var = np.sum(cum)
 
-            cum_var = np.cumsum(cum)
-            mode_n_components = min(
-                int(np.searchsorted(cum_var, self.var_ratio * tot_var, side="right")) + 1, shape_[mode_i]
-            )
-            modewise_n_components += (mode_n_components,)
+                cum_var = np.cumsum(cum)
+                mode_n_components = min(
+                    int(np.searchsorted(cum_var, self.explained_variance_ratio * tot_var, side="right")) + 1,
+                    shape_[mode_i],
+                )
+                output_shape += (mode_n_components,)
+            else:
+                mode_n_components = output_shape[mode_i - 1]
 
-            # Only the j largest eigenvectors are needed; scipy eigh returns them in
-            # ascending eigenvalue order for the requested index range.
-            _, eigenvectors = eigh(
+            # Only the top mode_n_components eigenvectors are needed; scipy eigh
+            # returns them in ascending eigenvalue order for the requested range.
+            subset_eigenvalues, eigenvectors = eigh(
                 covariance_matrices[mode_i], subset_by_index=[shape_[mode_i] - mode_n_components, shape_[mode_i] - 1]
             )
+            tot_var = np.trace(covariance_matrices[mode_i])
+            explained_variance_ratio = subset_eigenvalues.sum() / tot_var if tot_var > 0 else 0.0
+            explained_variance_ratios.append(explained_variance_ratio)
             proj_matrices.append(eigenvectors[:, ::-1].T)
 
         for _iter in range(self.max_iter):
@@ -264,13 +315,13 @@ class MPCA(BaseEstimator, TransformerMixin):
 
                 _, eigenvectors = eigh(
                     mode_cov_mat,
-                    subset_by_index=[shape_[mode_i] - modewise_n_components[mode_i - 1], shape_[mode_i] - 1],
+                    subset_by_index=[shape_[mode_i] - output_shape[mode_i - 1], shape_[mode_i] - 1],
                 )
                 proj_matrices[mode_i - 1] = eigenvectors[:, ::-1].T
 
         # variance of the projected features, accumulated per chunk so the full
         # unfolded projection never has to be materialized
-        x_proj_var = np.zeros(int(np.prod(modewise_n_components)))
+        x_proj_var = np.zeros(int(np.prod(output_shape)))
         modes_all = [m for m in range(1, n_dims)]
         for start in range(0, n_samples, chunk_size):
             batch = X[start : start + chunk_size] - self.mean_
@@ -281,7 +332,8 @@ class MPCA(BaseEstimator, TransformerMixin):
 
         self.proj_mats = proj_matrices
         self.idx_order = idx_order
-        self.modewise_n_components = modewise_n_components
+        self.output_shape_ = output_shape
+        self.explained_variance_ratio_ = tuple(explained_variance_ratios)
         self.n_dims = n_dims
 
         return self
@@ -304,7 +356,7 @@ class MPCA(BaseEstimator, TransformerMixin):
         # reshape X to shape (1, I_1, I_2, ..., I_N) if X in shape (I_1, I_2, ..., I_N), i.e. n_samples = 1
         if X.ndim == self.n_dims - 1:
             X = X.reshape((1,) + X.shape)
-        _check_tensor_dim_shape(X, self.n_dims, self.sample_shape)
+        _check_tensor_dim_shape(X, self.n_dims, self.input_shape)
         X = X - self.mean_
 
         # projected tensor in lower dimensions
@@ -315,7 +367,7 @@ class MPCA(BaseEstimator, TransformerMixin):
             x_projected = unfold(x_projected, mode=0)
             x_projected = x_projected[:, self.idx_order]
             if isinstance(n_components, int):
-                n_features = int(np.prod(self.modewise_n_components))
+                n_features = int(np.prod(self.output_shape_))
                 if n_components > n_features:
                     warn_msg = (
                         "n_components %d exceeds the maximum number, all features will be returned." % n_components
@@ -337,28 +389,28 @@ class MPCA(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        x_rec : ndarray of shape (n_samples, I_1, ..., I_N)
+        x_reconstructed : ndarray of shape (n_samples, I_1, ..., I_N)
             Reconstructed tensor data in the original shape.
         """
-        # reshape X to tensor in shape (n_samples, self.modewise_n_components) if X has been unfolded
+        # reshape X to tensor in shape (n_samples, self.output_shape_) if X has been unfolded
         if X.ndim <= 2:
             if X.ndim == 1:
                 # reshape X to a 2D matrix (1, n_components) if X in shape (n_components,)
                 X = X.reshape((1, -1))
             n_samples = X.shape[0]
             n_features = X.shape[1]
-            if n_features <= np.prod(self.modewise_n_components):
-                x_ = np.zeros((n_samples, np.prod(self.modewise_n_components)))
+            if n_features <= np.prod(self.output_shape_):
+                x_ = np.zeros((n_samples, np.prod(self.output_shape_)))
                 x_[:, self.idx_order[:n_features]] = X[:]
             else:
                 msg = "Feature dimension exceeds the shape upper limit."
                 logging.error(msg)
                 raise ValueError(msg)
 
-            X = fold(x_, mode=0, shape=((n_samples,) + self.modewise_n_components))
+            X = fold(x_, mode=0, shape=((n_samples,) + self.output_shape_))
 
-        x_rec = multi_mode_dot(X, self.proj_mats, modes=[m for m in range(1, self.n_dims)], transpose=True)
+        x_reconstructed = multi_mode_dot(X, self.proj_mats, modes=[m for m in range(1, self.n_dims)], transpose=True)
 
-        x_rec = x_rec + self.mean_
+        x_reconstructed = x_reconstructed + self.mean_
 
-        return x_rec
+        return x_reconstructed
