@@ -82,6 +82,15 @@ class BaseKaleEstimator(BaseEstimator, ClassifierMixin):
         q = -1 * np.ones(n_labeled)
         upper_bound = C / n_labeled
 
+        # The semi-dual Hessian is only positive-semidefinite up to rounding
+        # (manifold/MMD terms such as ``L @ K`` are not PSD in general), which
+        # makes convex QP solvers such as osqp fail on some datasets. Project
+        # ``P`` onto the PSD cone so the QP is always convex and solvable.
+        P = P.astype(np.float64)
+        P = 0.5 * (P + P.T)
+        eigenvalues, eigenvectors = np.linalg.eigh(P)
+        P = (eigenvectors * np.clip(eigenvalues, 0, None)) @ eigenvectors.T
+
         if solver == "cvxopt":
             G = np.zeros((2 * n_labeled, n_labeled))
             G[:n_labeled, :] = -1 * np.eye(n_labeled)

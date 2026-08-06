@@ -6,6 +6,8 @@ installation instructions and an API overview, see the
 
 ## Learn a Domain-Invariant Embedding
 
+### Use TCA for Two-Domain Adaptation
+
 ```python
 import numpy as np
 from kalelinear.transformer import TCA
@@ -35,7 +37,7 @@ TCA, JDA, and BDA take domain labels through `covariates`. They do not accept
 separate source and target arrays; stack samples into one array and use
 `target_covariate` to identify the target domain.
 
-## Use MIDA with Categorical Covariates
+### Use MIDA with Categorical Domain Covariates
 
 ```python
 import numpy as np
@@ -43,7 +45,7 @@ from kalelinear.transformer import MIDA
 
 x = np.random.default_rng(0).normal(size=(8, 4))
 y = np.array([0, 0, 1, 1, 0, 0, 1, 1])
-domains = np.array(["source", "source", "source", "source", "target", "target", "target", "target"])
+domains = np.array(["source1", "source1", "source2", "source2", "target", "target", "target", "target"])
 
 transformer = MIDA(n_components=2, covariate_encoder="onehot")
 z = transformer.fit_transform(x, y=y, covariates=domains)

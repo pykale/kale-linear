@@ -106,6 +106,17 @@ def _eigendecompose(
     """Compute eigenpairs for a kernel matrix or a generalized eigenproblem."""
     a, b = _get_eigenproblem_matrices(eigenproblem)
 
+    # Generalized eigenproblems require a positive-definite ``b``. Constraint
+    # matrices such as centered kernel matrices are only positive-semidefinite
+    # up to floating-point rounding, which makes scipy's ``eigh(a, b)`` fail
+    # with a non-positive-definite error. Regularize ``b`` with a small ridge
+    # relative to its scale; the shift is negligible for the retained
+    # components.
+    if b is not None:
+        b = 0.5 * (b + b.T)
+        ridge = 10 * np.finfo(b.dtype).eps * max(1.0, np.max(np.abs(b))) * b.shape[0]
+        b = b + ridge * np.eye(b.shape[0], dtype=b.dtype)
+
     n_components = _check_n_components((a, b), n_components)
     solver = _check_solver((a, b), n_components, solver, eigenvalue_order)
 

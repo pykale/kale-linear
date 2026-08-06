@@ -1,0 +1,31 @@
+# This workflow will generate a log of changes automatically upon a new release.
+# See https://github.com/marketplace/actions/changelog-ci
+
+name: changelog
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  log-changes:
+    name: Log changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          # Keep checkout shallow; changelog-ci handles unshallow internally.
+          # Using fetch-depth: 0 causes changelog-ci to fail with:
+          # "fatal: --unshallow on a complete repository does not make sense"
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run changelog
+        uses: saadmk11/changelog-ci@v1.2.0
+        with:
+          changelog_filename: .github/CHANGELOG.md
+          config_file: .github/changelog-ci-config.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

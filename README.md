@@ -9,12 +9,11 @@
 [![PyPI version](https://img.shields.io/pypi/v/kalelinear?color=blue)](https://pypi.org/project/kalelinear/)
 [![PyPI downloads](https://pepy.tech/badge/kalelinear)](https://pepy.tech/project/kalelinear)
 
-
 `kalelinear` is a Python library for learning harmonized or individualized models from multi-source/multi-view data in linear or reproducing kernel Hilbert spaces (RKHS). It provides NumPy-based methods for leveraging related data distributions and structural assumptions, including transfer learning, domain adaptation, manifold regularization, and group-aware learning, through a [`scikit-learn`](https://github.com/scikit-learn/scikit-learn) style API.
 
 The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem and focuses on linear and kernel methods for data characterized by covariates (e.g., domain labels, group labels, side information), unlabeled target samples, or tensor structures.
 
-## Methods and features
+## What's included
 
 - Transformer models for learning feature embeddings:
   - Multilinear Principal Component Analysis (MPCA) [[1](#references)]
@@ -32,7 +31,19 @@ The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem 
   `fit_predict` workflows where applicable.
 - Optional covariate encoding for categorical domain or group labels.
 
-## Installation
+`kalelinear` requires Python 3.10 or later. Core dependencies include:
+
+- [NumPy](http://www.numpy.org/)
+- [SciPy](https://www.scipy.org/)
+- [scikit-learn](http://scikit-learn.org/)
+- [pandas](https://pandas.pydata.org/)
+- [tensorly](http://tensorly.org/)
+- [cvxopt](http://cvxopt.org/)
+- [osqp](https://osqp.org/)
+
+## Getting started
+
+### Installation
 
 Install the released package from PyPI:
 
@@ -46,34 +57,7 @@ Install from a local checkout for development:
 pip install -e ".[dev]"
 ```
 
-`kalelinear` requires Python 3.10 or later. Core dependencies include:
-
-- [NumPy](http://www.numpy.org/)
-- [SciPy](https://www.scipy.org/)
-- [scikit-learn](http://scikit-learn.org/)
-- [pandas](https://pandas.pydata.org/)
-- [tensorly](http://tensorly.org/)
-- [cvxopt](http://cvxopt.org/)
-- [osqp](https://osqp.org/)
-
-## Quick Start
-
-Worked examples for the main transformers and estimators are collected in
-[Tutorials](TUTORIALS.md):
-
-- Learn a domain-invariant embedding with TCA
-- Use MIDA with categorical covariates
-- Train a domain adaptation classifier (ARSVM, ARRLS)
-- Train a manifold-regularized classifier (LapSVM, LapRLS)
-
-## Public API
-
-```python
-from kalelinear.transformer import BDA, JDA, MIDA, MPCA, TCA
-from kalelinear.estimator import ARRLS, ARSVM, CoIRLS, CoIRSVM, GSDA, LapRLS, LapSVM
-```
-
-## Development
+### Development
 
 From the root of the repository, run the following commands in your terminal:
 
@@ -101,6 +85,21 @@ From the root of the repository, run the following commands in your terminal:
    pip install -r docs/requirements.txt
    sphinx-build -b html docs/source docs/build/html
    ```
+
+### Public API
+
+```python
+from kalelinear.transformer import BDA, JDA, MIDA, MPCA, TCA
+from kalelinear.estimator import ARRLS, ARSVM, CoIRLS, CoIRSVM, GSDA, LapRLS, LapSVM
+```
+
+Worked examples for the main transformers and estimators are collected in
+[Tutorials](TUTORIALS.md):
+
+- Learn a domain-invariant embedding with TCA
+- Use MIDA with categorical covariates
+- Train a domain adaptation classifier (ARSVM, ARRLS)
+- Train a manifold-regularized classifier (LapSVM, LapRLS)
 
 # References
 
