@@ -43,24 +43,24 @@ separate source and target arrays; stack samples into one array and use
 import numpy as np
 from kalelinear.transformer import MIDA
 
-x = np.random.default_rng(0).normal(size=(8, 4))
+X = np.random.default_rng(0).normal(size=(8, 4))
 y = np.array([0, 0, 1, 1, 0, 0, 1, 1])
 domains = np.array(["source1", "source1", "source2", "source2", "target", "target", "target", "target"])
 
 transformer = MIDA(n_components=2, covariate_encoder="onehot")
-z = transformer.fit_transform(x, y=y, covariates=domains)
+z = transformer.fit_transform(X, y=y, covariates=domains)
 ```
 
 ## Train a Domain Adaptation Classifier
 
-For ARSVM and ARRLS, pass all source and target samples in `x`, labels for the
+For ARSVM and ARRLS, pass all source and target samples in `X`, labels for the
 source samples in `y`, and a covariate vector identifying the target domain.
 
 ```python
 import numpy as np
 from kalelinear.estimator import ARSVM
 
-x = np.array(
+X = np.array(
     [
         [-2.2, -1.9],
         [-1.9, -2.1],
@@ -75,11 +75,11 @@ x = np.array(
 
 source_labels = np.array([0, 0, 1, 1])
 domains = np.array([0, 0, 0, 0, 1, 1, 1, 1])
-x_target = x[domains == 1]
+X_target = X[domains == 1]
 
 clf = ARSVM()
-clf.fit(x, source_labels, covariates=domains, target_covariate=1)
-y_pred = clf.predict(x_target)
+clf.fit(X, source_labels, covariates=domains, target_covariate=1)
+y_pred = clf.predict(X_target)
 ```
 
 ## Train a Manifold-Regularized Classifier
@@ -91,13 +91,13 @@ samples. The labels array may contain only the labeled source examples.
 import numpy as np
 from kalelinear.estimator import LapSVM
 
-x_source = np.array([[-2.0, -1.8], [-1.8, -2.1], [1.9, 1.7], [2.1, 2.0]])
+X_source = np.array([[-2.0, -1.8], [-1.8, -2.1], [1.9, 1.7], [2.1, 2.0]])
 ys = np.array([0, 0, 1, 1])
-x_target = np.array([[-1.4, -1.2], [-1.2, -1.1], [1.2, 1.1], [1.4, 1.3]])
+X_target = np.array([[-1.4, -1.2], [-1.2, -1.1], [1.2, 1.1], [1.4, 1.3]])
 
-x_train = np.vstack((x_source, x_target))
+X_train = np.vstack((X_source, X_target))
 
 clf = LapSVM(kernel="linear")
-clf.fit(x_train, ys)
-y_pred = clf.predict(x_target)
+clf.fit(X_train, ys)
+y_pred = clf.predict(X_target)
 ```

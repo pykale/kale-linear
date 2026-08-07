@@ -123,13 +123,13 @@ class MPCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    proj_mats : list of ndarray
+    proj_mats_ : list of ndarray
         Transposed projection matrices with shapes ``(P_i, I_i)``.
-    idx_order : ndarray
+    idx_order_ : ndarray
         Feature ranking indices by descending projected variance.
     mean_ : ndarray
         Per-feature empirical mean of the training data.
-    input_shape : tuple
+    input_shape_ : tuple
         Input per-sample tensor shape.
     output_shape_ : tuple
         Output per-sample tensor shape after projection. Equals
@@ -148,21 +148,21 @@ class MPCA(BaseEstimator, TransformerMixin):
     --------
         >>> import numpy as np
         >>> from kalelinear.transformer import MPCA
-        >>> x = np.random.random((40, 20, 25, 20))
-        >>> x.shape
+        >>> X = np.random.random((40, 20, 25, 20))
+        >>> X.shape
         (40, 20, 25, 20)
         >>> mpca = MPCA()
-        >>> x_projected = mpca.fit_transform(x)
-        >>> x_projected.shape
+        >>> X_projected = mpca.fit_transform(X)
+        >>> X_projected.shape
         (40, 18, 23, 18)
-        >>> x_projected = mpca.transform(x)
-        >>> x_projected.shape
+        >>> X_projected = mpca.transform(X)
+        >>> X_projected.shape
         (40, 7452)
-        >>> x_projected = mpca.transform(x)
-        >>> x_projected.shape
+        >>> X_projected = mpca.transform(X)
+        >>> X_projected.shape
         (40, 50)
-        >>> x_reconstructed = mpca.inverse_transform(x_projected)
-        >>> x_reconstructed.shape
+        >>> X_reconstructed = mpca.inverse_transform(X_projected)
+        >>> X_reconstructed.shape
         (40, 20, 25, 20)
     """
 
@@ -176,7 +176,7 @@ class MPCA(BaseEstimator, TransformerMixin):
             msg = "Number of max iterations must be a positive integer but given %s" % max_iter
             logging.error(msg)
             raise ValueError(msg)
-        self.proj_mats = []
+        self.proj_mats_ = []
         self.vectorize = vectorize
         self.n_components = n_components
         if output_shape is None:
@@ -226,7 +226,7 @@ class MPCA(BaseEstimator, TransformerMixin):
         n_samples = shape_[0]
         n_dims = X.ndim
 
-        self.input_shape = shape_[1:]
+        self.input_shape_ = shape_[1:]
 
         # Samples are processed in chunks so that a centered copy of the full
         # data never has to be materialized and disk-backed inputs (e.g. a
@@ -328,13 +328,13 @@ class MPCA(BaseEstimator, TransformerMixin):
             batch_proj = multi_mode_dot(batch, proj_matrices, modes=modes_all)
             batch_unfold = unfold(batch_proj, mode=0)  # unfold the chunked projection to shape (n_chunk, n_features)
             x_proj_var += np.einsum("ij,ij->j", batch_unfold, batch_unfold)
-        idx_order = np.argsort(-x_proj_var)
+        idx_order_ = np.argsort(-x_proj_var)
 
-        self.proj_mats = proj_matrices
-        self.idx_order = idx_order
+        self.proj_mats_ = proj_matrices
+        self.idx_order_ = idx_order_
         self.output_shape_ = output_shape
         self.explained_variance_ratio_ = tuple(explained_variance_ratios)
-        self.n_dims = n_dims
+        self.n_dims_ = n_dims
 
         return self
 
@@ -348,24 +348,24 @@ class MPCA(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        x_projected : ndarray
+        X_projected : ndarray
             Projected data. Shape is ``(n_samples, P_1, ..., P_N)`` when
             ``vectorize=False``. Otherwise returns vectorized features with
             optional truncation to ``n_components``.
         """
         # reshape X to shape (1, I_1, I_2, ..., I_N) if X in shape (I_1, I_2, ..., I_N), i.e. n_samples = 1
-        if X.ndim == self.n_dims - 1:
+        if X.ndim == self.n_dims_ - 1:
             X = X.reshape((1,) + X.shape)
-        _check_tensor_dim_shape(X, self.n_dims, self.input_shape)
+        _check_tensor_dim_shape(X, self.n_dims_, self.input_shape_)
         X = X - self.mean_
 
         # projected tensor in lower dimensions
-        x_projected = multi_mode_dot(X, self.proj_mats, modes=[m for m in range(1, self.n_dims)])
+        X_projected = multi_mode_dot(X, self.proj_mats_, modes=[m for m in range(1, self.n_dims_)])
 
         n_components = self.n_components
         if self.vectorize:
-            x_projected = unfold(x_projected, mode=0)
-            x_projected = x_projected[:, self.idx_order]
+            X_projected = unfold(X_projected, mode=0)
+            X_projected = X_projected[:, self.idx_order_]
             if isinstance(n_components, int):
                 n_features = int(np.prod(self.output_shape_))
                 if n_components > n_features:
@@ -375,9 +375,9 @@ class MPCA(BaseEstimator, TransformerMixin):
                     logging.warning(warn_msg)
                     warnings.warn(warn_msg)
                     n_components = n_features
-                x_projected = x_projected[:, :n_components]
+                X_projected = X_projected[:, :n_components]
 
-        return x_projected
+        return X_projected
 
     def inverse_transform(self, X):
         """Reconstruct original-space tensors from projected data.
@@ -389,7 +389,7 @@ class MPCA(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        x_reconstructed : ndarray of shape (n_samples, I_1, ..., I_N)
+        X_reconstructed : ndarray of shape (n_samples, I_1, ..., I_N)
             Reconstructed tensor data in the original shape.
         """
         # reshape X to tensor in shape (n_samples, self.output_shape_) if X has been unfolded
@@ -401,7 +401,7 @@ class MPCA(BaseEstimator, TransformerMixin):
             n_features = X.shape[1]
             if n_features <= np.prod(self.output_shape_):
                 x_ = np.zeros((n_samples, np.prod(self.output_shape_)))
-                x_[:, self.idx_order[:n_features]] = X[:]
+                x_[:, self.idx_order_[:n_features]] = X[:]
             else:
                 msg = "Feature dimension exceeds the shape upper limit."
                 logging.error(msg)
@@ -409,8 +409,8 @@ class MPCA(BaseEstimator, TransformerMixin):
 
             X = fold(x_, mode=0, shape=((n_samples,) + self.output_shape_))
 
-        x_reconstructed = multi_mode_dot(X, self.proj_mats, modes=[m for m in range(1, self.n_dims)], transpose=True)
+        X_reconstructed = multi_mode_dot(X, self.proj_mats_, modes=[m for m in range(1, self.n_dims_)], transpose=True)
 
-        x_reconstructed = x_reconstructed + self.mean_
+        X_reconstructed = X_reconstructed + self.mean_
 
-        return x_reconstructed
+        return X_reconstructed

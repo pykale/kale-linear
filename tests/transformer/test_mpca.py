@@ -10,7 +10,7 @@ from kalelinear.transformer import MPCA
 
 N_COMPS = [1, 50, 100]
 VAR_RATIOS = [0.7, 0.95]
-relative_tol = 0.00001
+RELATIVE_TOL = 0.00001
 
 
 @pytest.fixture(scope="module")
@@ -33,56 +33,56 @@ def baseline_model(download_path):
 @pytest.mark.parametrize("explained_variance_ratio", VAR_RATIOS)
 def test_mpca(explained_variance_ratio, n_components, gait):
     # basic mpca test, return tensor
-    x = gait["fea3D"].transpose((3, 0, 1, 2))
+    X = gait["fea3D"].transpose((3, 0, 1, 2))
     mpca = MPCA(explained_variance_ratio=explained_variance_ratio, vectorize=False)
-    x_proj = mpca.fit(x).transform(x)
+    X_proj = mpca.fit(X).transform(X)
 
-    testing.assert_equal(x_proj.ndim, x.ndim)
-    testing.assert_equal(x_proj.shape[0], x.shape[0])
-    for i in range(1, x.ndim):
-        assert x_proj.shape[i] <= x.shape[i]
-        testing.assert_equal(mpca.proj_mats[i - 1].shape[1], x.shape[i])
+    testing.assert_equal(X_proj.ndim, X.ndim)
+    testing.assert_equal(X_proj.shape[0], X.shape[0])
+    for i in range(1, X.ndim):
+        assert X_proj.shape[i] <= X.shape[i]
+        testing.assert_equal(mpca.proj_mats_[i - 1].shape[1], X.shape[i])
 
-    x_rec = mpca.inverse_transform(x_proj)
-    testing.assert_equal(x_rec.shape, x.shape)
+    X_rec = mpca.inverse_transform(X_proj)
+    testing.assert_equal(X_rec.shape, X.shape)
 
     # test return vector
     mpca.set_params(**{"vectorize": True, "n_components": n_components})
 
-    x_proj = mpca.transform(x)
-    testing.assert_equal(x_proj.ndim, 2)
-    testing.assert_equal(x_proj.shape[0], x.shape[0])
-    testing.assert_equal(x_proj.shape[1], n_components)
-    x_rec = mpca.inverse_transform(x_proj)
-    testing.assert_equal(x_rec.shape, x.shape)
+    X_proj = mpca.transform(X)
+    testing.assert_equal(X_proj.ndim, 2)
+    testing.assert_equal(X_proj.shape[0], X.shape[0])
+    testing.assert_equal(X_proj.shape[1], n_components)
+    X_rec = mpca.inverse_transform(X_proj)
+    testing.assert_equal(X_rec.shape, X.shape)
 
     # test n_samples = 1
-    x0_proj = mpca.transform(x[0])
-    testing.assert_equal(x0_proj.ndim, 2)
-    testing.assert_equal(x0_proj.shape[0], 1)
-    testing.assert_equal(x0_proj.shape[1], n_components)
-    x0_rec = mpca.inverse_transform(x0_proj.reshape(-1))
-    testing.assert_equal(x0_rec.shape[1:], x[0].shape)
+    X0_proj = mpca.transform(X[0])
+    testing.assert_equal(X0_proj.ndim, 2)
+    testing.assert_equal(X0_proj.shape[0], 1)
+    testing.assert_equal(X0_proj.shape[1], n_components)
+    X0_rec = mpca.inverse_transform(X0_proj.reshape(-1))
+    testing.assert_equal(X0_rec.shape[1:], X[0].shape)
 
     # test n_components exceeds upper limit
-    mpca.set_params(**{"vectorize": True, "n_components": np.prod(x.shape[1:]) + 1})
-    x_proj = mpca.transform(x)
-    testing.assert_equal(x_proj.shape[1], np.prod(mpca.shape_out))
+    mpca.set_params(**{"vectorize": True, "n_components": np.prod(X.shape[1:]) + 1})
+    X_proj = mpca.transform(X)
+    testing.assert_equal(X_proj.shape[1], np.prod(mpca.output_shape_))
 
 
 def test_mpca_against_baseline(gait, baseline_model):
-    x = gait["fea3D"].transpose((3, 0, 1, 2))
+    X = gait["fea3D"].transpose((3, 0, 1, 2))
     baseline_proj_mats = [baseline_model["tUs"][i][0] for i in range(baseline_model["tUs"].size)]
     baseline_mean = baseline_model["TXmean"]
     mpca = MPCA(explained_variance_ratio=0.97)
-    x_proj = mpca.fit(x).transform(x)
+    X_proj = mpca.fit(X).transform(X)
     testing.assert_allclose(baseline_mean, mpca.mean_)
-    baseline_proj_x = multi_mode_dot(x - baseline_mean, baseline_proj_mats, modes=[1, 2, 3])
+    baseline_proj_X = multi_mode_dot(X - baseline_mean, baseline_proj_mats, modes=[1, 2, 3])
     # check whether the output embeddings is close to the baseline output by keeping the same variance ratio 97%
-    testing.assert_allclose(x_proj**2, baseline_proj_x**2, rtol=relative_tol)
-    # testing.assert_equal(x_proj.shape, baseline_proj_x.shape)
+    testing.assert_allclose(X_proj**2, baseline_proj_X**2, rtol=RELATIVE_TOL)
+    # testing.assert_equal(X_proj.shape, baseline_proj_X.shape)
 
-    for i in range(x.ndim - 1):
+    for i in range(X.ndim - 1):
         # check whether each eigen-vector column is equal to/opposite of corresponding baseline eigen-vector column
-        # testing.assert_allclose(abs(mpca.proj_mats[i]), abs(baseline_proj_mats[i]))
-        testing.assert_allclose(mpca.proj_mats[i] ** 2, baseline_proj_mats[i] ** 2, rtol=relative_tol)
+        # testing.assert_allclose(abs(mpca.proj_mats_[i]), abs(baseline_proj_mats[i]))
+        testing.assert_allclose(mpca.proj_mats_[i] ** 2, baseline_proj_mats[i] ** 2, rtol=RELATIVE_TOL)

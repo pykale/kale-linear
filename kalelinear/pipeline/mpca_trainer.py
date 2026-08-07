@@ -100,7 +100,9 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
         if classifier_params == "auto":
             self.auto_classifier_param = True
             if self.classifier_param_grid is None:
-                self.classifier_param_grid = classifiers[classifier][1]
+                self.classifier_param_grid = {
+                    param_name: list(values) for param_name, values in classifiers[classifier][1].items()
+                }
             self.grid_search = GridSearchCV(
                 classifiers[classifier][0](), param_grid=self.classifier_param_grid, **self.search_params
             )
@@ -114,87 +116,87 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
 
         self.classifier_params = classifier_params
 
-    def fit(self, x, y):
-        """Fit a pipeline with the given data x and labels y
+    def fit(self, X, y):
+        """Fit a pipeline with the given data X and labels y
 
         Args:
-            x (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
+            X (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
             y (array-like): data labels, shape (n_samples, )
 
         Returns:
             self
         """
         # fit mpca
-        self.mpca.fit(x)
+        self.mpca.fit(X)
         self.mpca.set_params(**{"vectorize": True})
-        x_transformed = self.mpca.transform(x)
+        X_transformed = self.mpca.transform(X)
 
         # feature selection
         if self.n_features is None:
-            self.n_features = x_transformed.shape[1]
-            self.feature_order = self.mpca.idx_order
+            self.n_features = X_transformed.shape[1]
+            self.feature_order = self.mpca.idx_order_
         else:
-            f_score, p_val = f_classif(x_transformed, y)
+            f_score, p_val = f_classif(X_transformed, y)
             self.feature_order = (-1 * f_score).argsort()
-        x_transformed = x_transformed[:, self.feature_order][:, : self.n_features]
+        X_transformed = X_transformed[:, self.feature_order][:, : self.n_features]
 
         # fit classifier
         if self.auto_classifier_param:
-            self.grid_search.param_grid["C"].append(1 / x.shape[0])
-            self.grid_search.fit(x_transformed, y)
+            self.grid_search.param_grid["C"].append(1 / X.shape[0])
+            self.grid_search.fit(X_transformed, y)
             self.clf = self.grid_search.best_estimator_
         if self.classifier == "svc":
             self.clf.set_params(**{"probability": True})
 
-        self.clf.fit(x_transformed, y)
+        self.clf.fit(X_transformed, y)
 
-    def predict(self, x):
-        """Predict the labels for the given data x
+    def predict(self, X):
+        """Predict the labels for the given data X
 
         Args:
-            x (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
+            X (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
 
         Returns:
             array-like: Predicted labels, shape (n_samples, )
         """
-        return self.clf.predict(self._extract_feature(x))
+        return self.clf.predict(self._extract_feature(X))
 
-    def decision_function(self, x):
-        """Decision scores of each class for the given data x
+    def decision_function(self, X):
+        """Decision scores of each class for the given data X
 
         Args:
-            x (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
+            X (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
 
         Returns:
-            array-like: decision scores, shape (n_samples,) for binary case, else (n_samples, n_class)
+            array-like: decision scores, shape (n_samples,) for binary case, else (n_samples, n_classes)
         """
-        return self.clf.decision_function(self._extract_feature(x))
+        return self.clf.decision_function(self._extract_feature(X))
 
-    def predict_proba(self, x):
-        """Probability of each class for the given data x. Not supported by "linear_svc".
+    def predict_proba(self, X):
+        """Probability of each class for the given data X. Not supported by "linear_svc".
 
         Args:
-            x (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
+            X (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
 
         Returns:
-            array-like: probabilities, shape (n_samples, n_class)
+            array-like: probabilities, shape (n_samples, n_classes)
         """
         if self.classifier == "linear_svc":
             error_msg = "Linear SVC does not support computing probability."
             logging.error(error_msg)
             raise ValueError(error_msg)
-        return self.clf.predict_proba(self._extract_feature(x))
+        return self.clf.predict_proba(self._extract_feature(X))
 
-    def _extract_feature(self, x):
-        """Extracting features for the given data x with MPCA->Feature selection
+    def _extract_feature(self, X):
+        """Extracting features for the given data X with MPCA->Feature selection
 
         Args:
-            x (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
+            X (array-like tensor): input data, shape (n_samples, I_1, I_2, ..., I_N)
 
         Returns:
             array-like: n_new, shape (n_samples, n_features)
         """
         check_is_fitted(self.clf)
-        x_transformed = self.mpca.transform(x)
+        X_transformed = self.mpca.transform(X)
 
-        return x_transformed[:, self.feature_order][:, : self.n_features]
+        return X_transformed[:, self.feature_order][:, : self.n_features]

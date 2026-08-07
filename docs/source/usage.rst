@@ -15,7 +15,7 @@ label is the target domain.
    import numpy as np
    from kalelinear.transformer import TCA
 
-   x = np.array(
+   X = np.array(
        [
            [-2.0, -1.8],
            [-1.8, -2.1],
@@ -30,7 +30,7 @@ label is the target domain.
    domain_labels = np.array([0, 0, 0, 0, 1, 1, 1, 1])
 
    transformer = TCA(n_components=2)
-   z = transformer.fit_transform(x, covariates=domain_labels, target_covariate=1)
+   z = transformer.fit_transform(X, covariates=domain_labels, target_covariate=1)
 
    z_source = z[domain_labels == 0]
    z_target = z[domain_labels == 1]
@@ -38,7 +38,7 @@ label is the target domain.
 Domain Adaptation Estimators
 ----------------------------
 
-ARSVM and ARRLS use all source and target samples in ``x``, labels for the
+ARSVM and ARRLS use all source and target samples in ``X``, labels for the
 source samples, and covariates that mark each sample's domain.
 
 .. code-block:: python
@@ -46,7 +46,7 @@ source samples, and covariates that mark each sample's domain.
    import numpy as np
    from kalelinear.estimator import ARSVM
 
-   x = np.array(
+   X = np.array(
        [
            [-2.2, -1.9],
            [-1.9, -2.1],
@@ -60,8 +60,8 @@ source samples, and covariates that mark each sample's domain.
    )
    source_labels = np.array([0, 0, 1, 1])
    domains = np.array([0, 0, 0, 0, 1, 1, 1, 1])
-   x_target = x[domains == 1]
+   X_target = X[domains == 1]
 
    clf = ARSVM()
-   clf.fit(x, source_labels, covariates=domains, target_covariate=1)
-   y_pred = clf.predict(x_target)
+   clf.fit(X, source_labels, covariates=domains, target_covariate=1)
+   y_pred = clf.predict(X_target)

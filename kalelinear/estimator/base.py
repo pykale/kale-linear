@@ -20,7 +20,7 @@ class BaseKaleEstimator(BaseEstimator, ClassifierMixin):
     def __init__(
         self,
         kernel="linear",
-        k_neighbour=5,
+        k_neighbors=5,
         manifold_metric="cosine",
         knn_mode="distance",
         pos_label=1,
@@ -29,7 +29,7 @@ class BaseKaleEstimator(BaseEstimator, ClassifierMixin):
     ):
         super().__init__()
         self.kernel = kernel
-        self.k_neighbour = k_neighbour
+        self.k_neighbors = k_neighbors
         self.manifold_metric = manifold_metric
         self.knn_mode = knn_mode
         self.coef_ = None
