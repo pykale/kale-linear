@@ -158,7 +158,7 @@ class MPCA(BaseEstimator, TransformerMixin):
         >>> X_projected = mpca.transform(X)
         >>> X_projected.shape
         (40, 7452)
-        >>> X_projected = mpca.transform(X)
+        >>> X_projected = mpca.transform(X, vectorize=True)
         >>> X_projected.shape
         (40, 50)
         >>> X_reconstructed = mpca.inverse_transform(X_projected)
@@ -225,6 +225,11 @@ class MPCA(BaseEstimator, TransformerMixin):
         shape_ = X.shape  # shape of input data
         n_samples = shape_[0]
         n_dims = X.ndim
+
+        if n_samples <= 0:
+            error_msg = "MPCA requires at least 1 sample to fit."
+            logging.error(error_msg)
+            raise ValueError(error_msg)
 
         self.input_shape_ = shape_[1:]
 
@@ -338,13 +343,17 @@ class MPCA(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, X):
+    def transform(self, X, vectorize=None):
         """Project data to the MPCA subspace.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, I_1, ..., I_N) or (I_1, ..., I_N)
             Input tensor data.
+        vectorize : bool, default=None
+            Whether to return the projected data as vectors. If ``None``
+            (default), the value set in ``__init__`` (``self.vectorize``) is
+            used.
 
         Returns
         -------
@@ -353,6 +362,8 @@ class MPCA(BaseEstimator, TransformerMixin):
             ``vectorize=False``. Otherwise returns vectorized features with
             optional truncation to ``n_components``.
         """
+        if vectorize is None:
+            vectorize = self.vectorize
         # reshape X to shape (1, I_1, I_2, ..., I_N) if X in shape (I_1, I_2, ..., I_N), i.e. n_samples = 1
         if X.ndim == self.n_dims_ - 1:
             X = X.reshape((1,) + X.shape)
@@ -363,7 +374,7 @@ class MPCA(BaseEstimator, TransformerMixin):
         X_projected = multi_mode_dot(X, self.proj_mats_, modes=[m for m in range(1, self.n_dims_)])
 
         n_components = self.n_components
-        if self.vectorize:
+        if vectorize:
             X_projected = unfold(X_projected, mode=0)
             X_projected = X_projected[:, self.idx_order_]
             if isinstance(n_components, int):

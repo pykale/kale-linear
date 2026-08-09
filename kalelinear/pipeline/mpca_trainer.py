@@ -57,7 +57,7 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
             3. lr, {"C": [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]}
         mpca_params (dict, optional): Parameters of MPCA, e.g., {"explained_variance_ratio": 0.8}. Defaults to None,
             i.e., using the default parameters
-            (https://pykale.readthedocs.io/en/latest/kale.embed.html#module-kale.embed.mpca).
+            (https://kalelinear.readthedocs.io/en/latest/kalelinear.transformer.html#module-kalelinear.transformer.mpca).
         n_features (int, optional): Number of features for feature selection. Defaults to None, i.e., all features
             after dimension reduction will be used.
         search_params (dict, optional): Parameters of grid search, for more detail please see
@@ -142,13 +142,16 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
 
         # fit classifier
         if self.auto_classifier_param:
-            self.grid_search.param_grid["C"].append(1 / X.shape[0])
+            extra_c = 1 / X.shape[0]
+            if extra_c not in self.grid_search.param_grid["C"]:
+                self.grid_search.param_grid["C"].append(extra_c)
             self.grid_search.fit(X_transformed, y)
             self.clf = self.grid_search.best_estimator_
         if self.classifier == "svc":
             self.clf.set_params(**{"probability": True})
 
         self.clf.fit(X_transformed, y)
+        return self
 
     def predict(self, X):
         """Predict the labels for the given data X

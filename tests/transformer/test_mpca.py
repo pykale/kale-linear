@@ -86,3 +86,34 @@ def test_mpca_against_baseline(gait, baseline_model):
         # check whether each eigen-vector column is equal to/opposite of corresponding baseline eigen-vector column
         # testing.assert_allclose(abs(mpca.proj_mats_[i]), abs(baseline_proj_mats[i]))
         testing.assert_allclose(mpca.proj_mats_[i] ** 2, baseline_proj_mats[i] ** 2, rtol=RELATIVE_TOL)
+
+
+def test_transform_vectorize_override(gait):
+    X = gait["fea3D"].transpose((3, 0, 1, 2))
+    n_components = 50
+
+    # init-level default and transform-level override to True
+    mpca = MPCA(vectorize=False).fit(X)
+    X_proj_tensor = mpca.transform(X)
+    X_proj_vec = mpca.transform(X, vectorize=True)
+    testing.assert_equal(X_proj_tensor.ndim, X.ndim)
+    testing.assert_equal(X_proj_vec.ndim, 2)
+
+    # init-level vectorize=True and transform-level override to False
+    mpca = MPCA(vectorize=True, n_components=n_components).fit(X)
+    X_proj_vec = mpca.transform(X)
+    X_proj_tensor = mpca.transform(X, vectorize=False)
+    testing.assert_equal(X_proj_vec.ndim, 2)
+    testing.assert_equal(X_proj_vec.shape[1], n_components)
+    testing.assert_equal(X_proj_tensor.ndim, X.ndim)
+
+    # explicit None keeps the init-level setting
+    X_proj_tensor_default = mpca.transform(X, vectorize=None)
+    testing.assert_equal(X_proj_tensor_default.ndim, 2)
+
+
+def test_fit_empty_input_raises():
+    X = np.empty((0, 4, 5, 6))
+    mpca = MPCA()
+    with pytest.raises(ValueError, match="0 sample"):
+        mpca.fit(X)

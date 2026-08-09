@@ -1,4 +1,4 @@
-"""Sphinx configuration for Kale-Linear documentation."""
+"""Sphinx configuration for kalelinear documentation."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.abspath("../.."))
 
-project = "Kale-Linear"
+project = "kalelinear"
 author = "The PyKale team"
 copyright = f"{datetime.now().year}, {author}"
 
