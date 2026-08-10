@@ -11,15 +11,7 @@ from setuptools import find_packages, setup
 
 
 # Core dependencies frequently used in the kalelinear API
-install_requires = [
-    "cvxopt",
-    "numpy",
-    "osqp",
-    "pandas",
-    "scikit-learn>=1.6.0",
-    "scipy",
-    "tensorly",
-]
+install_requires = ["cvxopt", "numpy", "osqp", "pandas", "scikit-learn>=1.6.0", "scipy", "tensorly", "pykale"]
 
 # Dependencies for all examples and tutorials
 example_requires = [

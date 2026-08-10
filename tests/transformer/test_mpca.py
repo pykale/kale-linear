@@ -14,14 +14,6 @@ RELATIVE_TOL = 0.00001
 
 
 @pytest.fixture(scope="module")
-def gait(download_path):
-    gait_data_path = os.path.join(download_path, "gait.mat")
-    if not os.path.exists(gait_data_path):
-        pytest.skip("Gait data not found, skipping tests.")
-    return loadmat(gait_data_path)
-
-
-@pytest.fixture(scope="module")
 def baseline_model(download_path):
     baseline_data_path = os.path.join(download_path, "baseline.mat")
     if not os.path.exists(baseline_data_path):
@@ -115,5 +107,5 @@ def test_transform_vectorize_override(gait):
 def test_fit_empty_input_raises():
     X = np.empty((0, 4, 5, 6))
     mpca = MPCA()
-    with pytest.raises(ValueError, match="0 sample"):
+    with pytest.raises(ValueError, match="MPCA requires at least 2 samples to fit."):
         mpca.fit(X)

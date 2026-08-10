@@ -226,8 +226,8 @@ class MPCA(BaseEstimator, TransformerMixin):
         n_samples = shape_[0]
         n_dims = X.ndim
 
-        if n_samples <= 0:
-            error_msg = "MPCA requires at least 1 sample to fit."
+        if n_samples < 2:
+            error_msg = "MPCA requires at least 2 samples to fit."
             logging.error(error_msg)
             raise ValueError(error_msg)
 

@@ -2,6 +2,7 @@ cvxopt
 numpy
 osqp
 pandas
+pykale
 scikit-learn
 scipy
 tensorly
