@@ -20,27 +20,27 @@ PARAMS = [
 @pytest.mark.parametrize("classifier", CLASSIFIERS)
 @pytest.mark.parametrize("params", PARAMS)
 def test_mpca_trainer(classifier, params, gait):
-    x = gait["fea3D"].transpose((3, 0, 1, 2))
-    x = x[:20, :]
+    X = gait["fea3D"].transpose((3, 0, 1, 2))
+    X = X[:20, :]
     y = gait["gnd"][:20].reshape(-1)
     trainer = MPCATrainer(classifier=classifier, **params)
-    trainer.fit(x, y)
-    y_pred = trainer.predict(x)
+    trainer.fit(X, y)
+    y_pred = trainer.predict(X)
     testing.assert_equal(np.unique(y), np.unique(y_pred))
     assert accuracy_score(y, y_pred) >= 0.8
 
     if classifier == "linear_svc":
         with pytest.raises(Exception):
-            y_proba = trainer.predict_proba(x)
+            y_proba = trainer.predict_proba(X)
     else:
-        y_proba = trainer.predict_proba(x)
+        y_proba = trainer.predict_proba(X)
         assert np.max(y_proba) <= 1.0
         assert np.min(y_proba) >= 0.0
         y_ = np.zeros(y.shape)
         y_[np.where(y == 1)] = 1
         assert roc_auc_score(y_, y_proba[:, 0]) >= 0.8
 
-    y_dec_score = trainer.decision_function(x)
+    y_dec_score = trainer.decision_function(X)
     assert roc_auc_score(y, y_dec_score) >= 0.8
 
     if classifier == "svc" and trainer.clf.kernel == "rbf":
@@ -50,7 +50,7 @@ def test_mpca_trainer(classifier, params, gait):
         # interpret utilities (select_top_weight/plot_weights) are not ported
         # to kalelinear yet, so only check the inverse-transform path here.
         weights = trainer.mpca.inverse_transform(trainer.clf.coef_) - trainer.mpca.mean_
-        testing.assert_equal(weights.shape[1:], x.shape[1:])
+        testing.assert_equal(weights.shape[1:], X.shape[1:])
 
 
 def test_invalid_init():

@@ -57,11 +57,11 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
             3. lr, {"C": [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]}
         mpca_params (dict, optional): Parameters of MPCA, e.g., {"explained_variance_ratio": 0.8}. Defaults to None,
             i.e., using the default parameters
-            (https://kalelinear.readthedocs.io/en/latest/kalelinear.transformer.html#module-kalelinear.transformer.mpca).
+            (https://kalelinear.readthedocs.io/en/latest/api_transformers.html#kalelinear.transformer.MPCA).
         n_features (int, optional): Number of features for feature selection. Defaults to None, i.e., all features
             after dimension reduction will be used.
         search_params (dict, optional): Parameters of grid search, for more detail please see
-            https://scikit-learn.org/stable/modules/grid_search.html#grid-search . Defaults to None, i.e., using the
+            https://scikit-learn.org/stable/modules/grid_search.html#grid-search. Defaults to None, i.e., using the
             default params: {"cv": 5}.
     """
 
@@ -82,18 +82,17 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
         self.classifier = classifier
         # init mpca object
         if mpca_params is None:
-            self.mpca_params = default_mpca_params
+            self.mpca_params = dict(default_mpca_params)
         else:
-            self.mpca_params = mpca_params
+            self.mpca_params = dict(mpca_params)
         self.mpca = MPCA(**self.mpca_params)
         # init feature selection parameters
         self.n_features = n_features
-        self.feature_order = None
         # init classifier object
         if search_params is None:
-            self.search_params = default_search_params
+            self.search_params = dict(default_search_params)
         else:
-            self.search_params = search_params
+            self.search_params = dict(search_params)
         self.classifier_param_grid = classifier_param_grid
 
         self.auto_classifier_param = False
@@ -114,7 +113,16 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
             logging.error(error_msg)
             raise ValueError(error_msg)
 
-        self.classifier_params = classifier_params
+        if isinstance(classifier_params, dict):
+            self.classifier_params = dict(classifier_params)
+            self.clf = classifiers[classifier][0](**classifier_params)
+        elif classifier_params == "auto":
+            self.auto_classifier_param = True
+            self.classifier_params = "auto"
+        else:
+            error_msg = "Invalid classifier parameter type"
+            logging.error(error_msg)
+            raise ValueError(error_msg)
 
     def fit(self, X, y):
         """Fit a pipeline with the given data X and labels y
@@ -133,18 +141,23 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
 
         # feature selection
         if self.n_features is None:
-            self.n_features = X_transformed.shape[1]
-            self.feature_order = self.mpca.idx_order_
+            self.n_features_ = X_transformed.shape[1]
+            self.feature_order_ = self.mpca.idx_order_
         else:
             f_score, p_val = f_classif(X_transformed, y)
-            self.feature_order = (-1 * f_score).argsort()
-        X_transformed = X_transformed[:, self.feature_order][:, : self.n_features]
+            self.feature_order_ = (-1 * f_score).argsort()
+            self.n_features_ = self.n_features
+        X_transformed = X_transformed[:, self.feature_order_][:, : self.n_features_]
 
         # fit classifier
         if self.auto_classifier_param:
+            param_grid = {name: list(values) for name, values in self.classifier_param_grid.items()}
             extra_c = 1 / X.shape[0]
-            if extra_c not in self.grid_search.param_grid["C"]:
-                self.grid_search.param_grid["C"].append(extra_c)
+            if extra_c not in param_grid["C"]:
+                param_grid["C"].append(extra_c)
+            self.grid_search = GridSearchCV(
+                classifiers[self.classifier][0](), param_grid=param_grid, **self.search_params
+            )
             self.grid_search.fit(X_transformed, y)
             self.clf = self.grid_search.best_estimator_
         if self.classifier == "svc":
@@ -162,7 +175,8 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
         Returns:
             array-like: Predicted labels, shape (n_samples, )
         """
-        return self.clf.predict(self._extract_feature(X))
+        features = self._extract_feature(X)
+        return self.clf.predict(features)
 
     def decision_function(self, X):
         """Decision scores of each class for the given data X
@@ -173,7 +187,8 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
         Returns:
             array-like: decision scores, shape (n_samples,) for binary case, else (n_samples, n_classes)
         """
-        return self.clf.decision_function(self._extract_feature(X))
+        features = self._extract_feature(X)
+        return self.clf.decision_function(features)
 
     def predict_proba(self, X):
         """Probability of each class for the given data X. Not supported by "linear_svc".
@@ -188,7 +203,8 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
             error_msg = "Linear SVC does not support computing probability."
             logging.error(error_msg)
             raise ValueError(error_msg)
-        return self.clf.predict_proba(self._extract_feature(X))
+        features = self._extract_feature(X)
+        return self.clf.predict_proba(features)
 
     def _extract_feature(self, X):
         """Extracting features for the given data X with MPCA->Feature selection
@@ -199,7 +215,7 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
         Returns:
             array-like: n_new, shape (n_samples, n_features)
         """
-        check_is_fitted(self.clf)
+        check_is_fitted(self)
         X_transformed = self.mpca.transform(X)
 
-        return X_transformed[:, self.feature_order][:, : self.n_features]
+        return X_transformed[:, self.feature_order_][:, : self.n_features_]

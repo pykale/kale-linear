@@ -2,8 +2,8 @@
 <img src="https://github.com/pykale/linear/raw/main/docs/images/kalelinear.jpg" width="60%" alt="kalelinear logo" />
 </p>
 
-<!-- [![tests](https://github.com/pykale/linear/workflows/test/badge.svg)](https://github.com/pykale/linear/actions/workflows/test.yml) -->
-<!-- [![codecov](https://codecov.io/gh/pykale/linear/branch/main/graph/badge.svg?token=jmIYPbA2le)](https://codecov.io/gh/pykale/linear) -->
+[![tests](https://github.com/pykale/linear/workflows/test/badge.svg)](https://github.com/pykale/linear/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/pykale/linear/branch/main/graph/badge.svg)](https://codecov.io/gh/pykale/linear)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/pykale/linear/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org)
 [![PyPI version](https://img.shields.io/pypi/v/kalelinear?color=blue)](https://pypi.org/project/kalelinear/)
@@ -27,8 +27,7 @@ The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem 
   - Covariate Independence Regularized Learning Framework (CoIRSVM, CoIRLS) [[8](#references)][[9](#references)]
   - Group-specific Discriminant Analysis (GSDA) [[9](#references)][[10](#references)]
 - NumPy-compatible inputs and outputs.
-- scikit-learn style `fit`, `transform`, `predict`, `fit_transform`, and
-  `fit_predict` workflows where applicable.
+- scikit-learn style `fit`, `transform`, `predict`, `fit_transform`, and `fit_predict` workflows where applicable.
 - Optional covariate encoding for categorical domain or group labels.
 
 `kalelinear` requires Python 3.10 or later. Core dependencies include:
