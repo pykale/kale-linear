@@ -176,7 +176,6 @@ class MPCA(BaseEstimator, TransformerMixin):
             msg = "Number of max iterations must be a positive integer but given %s" % max_iter
             logging.error(msg)
             raise ValueError(msg)
-        self.proj_mats_ = []
         self.vectorize = vectorize
         self.n_components = n_components
         if output_shape is None:
