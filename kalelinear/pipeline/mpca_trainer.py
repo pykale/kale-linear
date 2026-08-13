@@ -141,12 +141,13 @@ class MPCATrainer(BaseEstimator, ClassifierMixin):
 
         # feature selection
         if self.n_features is None:
+            # MPCA.transform(vectorize=True) already returns features ordered by variance.
+            self.feature_order_ = np.arange(X_transformed.shape[1])
             self.n_features_ = X_transformed.shape[1]
-            self.feature_order_ = self.mpca.idx_order_
         else:
-            f_score, p_val = f_classif(X_transformed, y)
-            self.feature_order_ = (-1 * f_score).argsort()
-            self.n_features_ = self.n_features
+            f_score, _ = f_classif(X_transformed, y)
+            self.feature_order_ = np.argsort(-f_score)
+            self.n_features_ = min(self.n_features, X_transformed.shape[1])
         X_transformed = X_transformed[:, self.feature_order_][:, : self.n_features_]
 
         # fit classifier
