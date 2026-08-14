@@ -2,19 +2,18 @@
 <img src="https://github.com/pykale/linear/raw/main/docs/images/kalelinear.jpg" width="60%" alt="kalelinear logo" />
 </p>
 
-<!-- [![tests](https://github.com/pykale/linear/workflows/test/badge.svg)](https://github.com/pykale/linear/actions/workflows/test.yml) -->
-<!-- [![codecov](https://codecov.io/gh/pykale/linear/branch/main/graph/badge.svg?token=jmIYPbA2le)](https://codecov.io/gh/pykale/linear) -->
+[![tests](https://github.com/pykale/linear/workflows/test/badge.svg)](https://github.com/pykale/linear/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/pykale/linear/branch/main/graph/badge.svg)](https://codecov.io/gh/pykale/linear)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/pykale/linear/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org)
 [![PyPI version](https://img.shields.io/pypi/v/kalelinear?color=blue)](https://pypi.org/project/kalelinear/)
 [![PyPI downloads](https://pepy.tech/badge/kalelinear)](https://pepy.tech/project/kalelinear)
 
-
 `kalelinear` is a Python library for learning harmonized or individualized models from multi-source/multi-view data in linear or reproducing kernel Hilbert spaces (RKHS). It provides NumPy-based methods for leveraging related data distributions and structural assumptions, including transfer learning, domain adaptation, manifold regularization, and group-aware learning, through a [`scikit-learn`](https://github.com/scikit-learn/scikit-learn) style API.
 
 The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem and focuses on linear and kernel methods for data characterized by covariates (e.g., domain labels, group labels, side information), unlabeled target samples, or tensor structures.
 
-## Methods and features
+## What's included
 
 - Transformer models for learning feature embeddings:
   - Multilinear Principal Component Analysis (MPCA) [[1](#references)]
@@ -28,11 +27,22 @@ The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem 
   - Covariate Independence Regularized Learning Framework (CoIRSVM, CoIRLS) [[8](#references)][[9](#references)]
   - Group-specific Discriminant Analysis (GSDA) [[9](#references)][[10](#references)]
 - NumPy-compatible inputs and outputs.
-- scikit-learn style `fit`, `transform`, `predict`, `fit_transform`, and
-  `fit_predict` workflows where applicable.
+- scikit-learn style `fit`, `transform`, `predict`, `fit_transform`, and `fit_predict` workflows where applicable.
 - Optional covariate encoding for categorical domain or group labels.
 
-## Installation
+`kalelinear` requires Python 3.10 or later. Core dependencies include:
+
+- [NumPy](http://www.numpy.org/)
+- [SciPy](https://www.scipy.org/)
+- [scikit-learn](http://scikit-learn.org/)
+- [pandas](https://pandas.pydata.org/)
+- [tensorly](http://tensorly.org/)
+- [cvxopt](http://cvxopt.org/)
+- [osqp](https://osqp.org/)
+
+## Getting started
+
+### Installation
 
 Install the released package from PyPI:
 
@@ -46,122 +56,7 @@ Install from a local checkout for development:
 pip install -e ".[dev]"
 ```
 
-`kalelinear` requires Python 3.10 or later. Core dependencies include:
-
-- [NumPy](http://www.numpy.org/)
-- [SciPy](https://www.scipy.org/)
-- [scikit-learn](http://scikit-learn.org/)
-- [pandas](https://pandas.pydata.org/)
-- [tensorly](http://tensorly.org/)
-- [cvxopt](http://cvxopt.org/)
-- [osqp](https://osqp.org/)
-
-## Quick Start
-
-### Learn a Domain-Invariant Embedding
-
-```python
-import numpy as np
-from kalelinear.transformer import TCA
-
-X = np.array(
-    [
-        [-2.0, -1.8],
-        [-1.8, -2.1],
-        [1.9, 1.7],
-        [2.1, 2.0],
-        [-1.4, -1.2],
-        [-1.2, -1.1],
-        [1.2, 1.1],
-        [1.4, 1.3],
-    ]
-)
-domain_labels = np.array([0, 0, 0, 0, 1, 1, 1, 1])
-
-transformer = TCA(n_components=2)
-z = transformer.fit_transform(X, covariates=domain_labels, target_covariate=1)
-
-z_source = z[domain_labels == 0]
-z_target = z[domain_labels == 1]
-```
-
-TCA, JDA, and BDA take domain labels through `covariates`. They do not accept
-separate source and target arrays; stack samples into one array and use
-`target_covariate` to identify the target domain.
-
-### Use MIDA with Categorical Covariates
-
-```python
-import numpy as np
-from kalelinear.transformer import MIDA
-
-x = np.random.default_rng(0).normal(size=(8, 4))
-y = np.array([0, 0, 1, 1, 0, 0, 1, 1])
-domains = np.array(["source", "source", "source", "source", "target", "target", "target", "target"])
-
-transformer = MIDA(n_components=2, covariate_encoder="onehot")
-z = transformer.fit_transform(x, y=y, covariates=domains)
-```
-
-### Train a Domain Adaptation Classifier
-
-For ARSVM and ARRLS, pass all source and target samples in `x`, labels for the
-source samples in `y`, and a covariate vector identifying the target domain.
-
-```python
-import numpy as np
-from kalelinear.estimator import ARSVM
-
-x = np.array(
-    [
-        [-2.2, -1.9],
-        [-1.9, -2.1],
-        [1.8, 2.1],
-        [2.0, 1.9],
-        [-1.4, -1.2],
-        [-1.1, -1.3],
-        [1.3, 1.1],
-        [1.5, 1.2],
-    ]
-)
-
-source_labels = np.array([0, 0, 1, 1])
-domains = np.array([0, 0, 0, 0, 1, 1, 1, 1])
-x_target = x[domains == 1]
-
-clf = ARSVM()
-clf.fit(x, source_labels, covariates=domains, target_covariate=1)
-y_pred = clf.predict(x_target)
-```
-
-### Train a Manifold-Regularized Classifier
-
-LapSVM and LapRLS can use labeled source samples together with unlabeled target
-samples. The labels array may contain only the labeled source examples.
-
-```python
-import numpy as np
-from kalelinear.estimator import LapSVM
-
-x_source = np.array([[-2.0, -1.8], [-1.8, -2.1], [1.9, 1.7], [2.1, 2.0]])
-ys = np.array([0, 0, 1, 1])
-x_target = np.array([[-1.4, -1.2], [-1.2, -1.1], [1.2, 1.1], [1.4, 1.3]])
-
-x_train = np.vstack((x_source, x_target))
-
-clf = LapSVM(kernel="linear")
-clf.fit(x_train, ys)
-y_pred = clf.predict(x_target)
-```
-
-## Public API
-
-```python
-from kalelinear.transformer import BDA, JDA, MIDA, MPCA, TCA
-from kalelinear.estimator import ARRLS, ARSVM, CoIRLS, CoIRSVM, GSDA, LapRLS, LapSVM
-```
-
-## Development
+### Development
 
 From the root of the repository, run the following commands in your terminal:
 
@@ -189,6 +84,21 @@ From the root of the repository, run the following commands in your terminal:
    pip install -r docs/requirements.txt
    sphinx-build -b html docs/source docs/build/html
    ```
+
+### Public API
+
+```python
+from kalelinear.transformer import BDA, JDA, MIDA, MPCA, TCA
+from kalelinear.estimator import ARRLS, ARSVM, CoIRLS, CoIRSVM, GSDA, LapRLS, LapSVM
+```
+
+Worked examples for the main transformers and estimators are collected in
+[Tutorials](TUTORIALS.md):
+
+- Learn a domain-invariant embedding with TCA
+- Use MIDA with categorical covariates
+- Train a domain adaptation classifier (ARSVM, ARRLS)
+- Train a manifold-regularized classifier (LapSVM, LapRLS)
 
 # References
 

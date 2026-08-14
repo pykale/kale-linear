@@ -29,7 +29,7 @@ def test_base_init_returns_expected_shapes(sample_data):
 
 @pytest.mark.parametrize("mode", ["distance", "connectivity"])
 def test_lap_norm_returns_square_matrix(sample_data, mode):
-    lap = lap_norm(sample_data, n_neighbour=2, mode=mode, normalise=False)
+    lap = lap_norm(sample_data, n_neighbors=2, mode=mode, normalize=False)
 
     assert lap.shape == (4, 4)
     assert np.allclose(lap, lap.T)
@@ -80,7 +80,7 @@ def make_domain_shifted_dataset(
     w = random_state.randn(num_features)
     w = w / np.linalg.norm(w)
 
-    x_all = []
+    X_all = []
     y_all = []
     domain_all = []
 
@@ -90,21 +90,21 @@ def make_domain_shifted_dataset(
         for label in [0, 1]:
             class_mean = (label - 0.5) * class_sep * w + domain_shift
             cov = np.eye(num_features)
-            x_class = random_state.multivariate_normal(class_mean, cov, num_samples_per_class)
+            X_class = random_state.multivariate_normal(class_mean, cov, num_samples_per_class)
             y_class = np.full(num_samples_per_class, label)
             domain_class = np.full(num_samples_per_class, i_domain)
 
-            x_all.append(x_class)
+            X_all.append(X_class)
             y_all.append(y_class)
             domain_all.append(domain_class)
 
-    x = np.vstack(x_all)
+    X = np.vstack(X_all)
     y = np.concatenate(y_all)
     domains = np.concatenate(domain_all)
 
-    idx = random_state.permutation(len(x))
-    x = x[idx]
+    idx = random_state.permutation(len(X))
+    X = X[idx]
     y = y[idx]
     domains = domains[idx]
 
-    return x, y, domains
+    return X, y, domains

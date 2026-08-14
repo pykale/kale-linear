@@ -1,4 +1,4 @@
-Kale-Linear Documentation
+kalelinear Documentation
 =========================
 
 Getting Started
@@ -11,7 +11,7 @@ Getting Started
    installation
    tutorial
 
-Kale-Linear API
+kalelinear API
 ---------------
 
 .. toctree::
@@ -23,7 +23,7 @@ Kale-Linear API
    api_estimators
    api_utilities
 
-Kale-Linear APIs above are ordered following the machine learning pipeline,
+kalelinear APIs above are ordered following the machine learning pipeline,
 i.e., feature embedding transformers, predictive estimators, and reusable
 utilities, rather than alphabetically.
 

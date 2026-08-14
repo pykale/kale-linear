@@ -46,7 +46,7 @@ class CoIRSVM(BaseDomainAdaptationEstimator):
         kernel="linear",
         lambda_=1.0,
         mu=0.0,
-        k_neighbour=3,
+        k_neighbors=3,
         manifold_metric="cosine",
         knn_mode="distance",
         solver="osqp",
@@ -65,7 +65,7 @@ class CoIRSVM(BaseDomainAdaptationEstimator):
             param for covariate (side information) independence regularisation, by default 1
         mu : float, optional
             param for manifold regularisation, by default 0
-        k_neighbour : int, optional
+        k_neighbors : int, optional
             number of nearest numbers for each sample in manifold regularisation,
             by default 3
         manifold_metric : str, optional
@@ -94,7 +94,7 @@ class CoIRSVM(BaseDomainAdaptationEstimator):
         # self.support_vectors_ = None
         # self.n_support_ = None
         self.manifold_metric = manifold_metric
-        self.k_neighbour = k_neighbour
+        self.k_neighbors = k_neighbors
         self.knn_mode = knn_mode
         self.covariate_encoder = covariate_encoder
         self._lb = LabelBinarizer(pos_label=1, neg_label=-1)
@@ -130,7 +130,7 @@ class CoIRSVM(BaseDomainAdaptationEstimator):
 
         Q_ = unit_matrix.copy()
         if self.mu != 0:
-            lap_mat = lap_norm(X, n_neighbour=self.k_neighbour, metric=self.manifold_metric, mode=self.knn_mode)
+            lap_mat = lap_norm(X, n_neighbors=self.k_neighbors, metric=self.manifold_metric, mode=self.knn_mode)
             Q_ += np.dot(
                 self.lambda_ / np.square(n - 1) * covariate_hsic_matrix + self.mu / np.square(n) * lap_mat,
                 x_kernel_matrix,
@@ -316,7 +316,7 @@ class CoIRLS(BaseDomainAdaptationEstimator):
         J[:nl, :nl] = np.eye(nl)
 
         if self.mu != 0:
-            lap_mat = lap_norm(X, n_neighbour=self.k, mode=self.knn_mode, metric=self.manifold_metric)
+            lap_mat = lap_norm(X, n_neighbors=self.k, mode=self.knn_mode, metric=self.manifold_metric)
             Q_ = self.sigma_ * unit_matrix + np.dot(
                 J + self.lambda_ / np.square(n - 1) * covariate_hsic_matrix + self.mu / np.square(n) * lap_mat,
                 x_kernel_matrix,

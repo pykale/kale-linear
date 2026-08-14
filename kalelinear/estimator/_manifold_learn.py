@@ -24,7 +24,7 @@ class LapSVM(BaseKaleEstimator):
         kernel="linear",
         gamma_=1.0,
         solver="osqp",
-        k_neighbour=3,
+        k_neighbors=3,
         manifold_metric="cosine",
         knn_mode="distance",
         **kwargs,
@@ -41,7 +41,7 @@ class LapSVM(BaseKaleEstimator):
             param for manifold regularisation, by default 1.0
         solver : str, optional
             quadratic programming solver, [cvxopt, osqp], by default 'osqp'
-        k_neighbour : int, optional
+        k_neighbors : int, optional
             number of nearest numbers for each sample in manifold regularisation,
             by default 3
         manifold_metric : str, optional
@@ -62,7 +62,7 @@ class LapSVM(BaseKaleEstimator):
         self.solver = solver
         self.kwargs = kwargs
         self.manifold_metric = manifold_metric
-        self.k_neighbour = k_neighbour
+        self.k_neighbors = k_neighbors
         self.knn_mode = knn_mode
         self._lb = LabelBinarizer(pos_label=1, neg_label=-1)
 
@@ -87,7 +87,7 @@ class LapSVM(BaseKaleEstimator):
         if self.gamma_ == 0:
             Q_ = centering_matrix
         else:
-            lap_mat = lap_norm(X, n_neighbour=self.k_neighbour, mode=self.knn_mode)
+            lap_mat = lap_norm(X, n_neighbors=self.k_neighbors, mode=self.knn_mode)
             Q_ = centering_matrix + self.gamma_ * np.dot(lap_mat, x_kernel_matrix)
 
         y_ = self._lb.fit_transform(y)
@@ -171,7 +171,7 @@ class LapRLS(BaseKaleEstimator):
         kernel="linear",
         gamma_=1.0,
         sigma_=1.0,
-        k_neighbour=5,
+        k_neighbors=5,
         manifold_metric="cosine",
         knn_mode="distance",
         **kwargs,
@@ -186,7 +186,7 @@ class LapRLS(BaseKaleEstimator):
             manifold regularisation param, by default 1.0
         sigma_ : float, optional
             l2 regularisation param, by default 1.0
-        k_neighbour : int, optional
+        k_neighbors : int, optional
             number of nearest numbers for each sample in manifold regularisation,
             by default 5
         manifold_metric : str, optional
@@ -205,7 +205,7 @@ class LapRLS(BaseKaleEstimator):
         self.kernel = kernel
         self.gamma_ = gamma_
         self.sigma_ = sigma_
-        self.k_neighbour = k_neighbour
+        self.k_neighbors = k_neighbors
         # self.coef_ = None
         self.knn_mode = knn_mode
         self.manifold_metric = manifold_metric
@@ -235,7 +235,7 @@ class LapRLS(BaseKaleEstimator):
         J[:nl, :nl] = np.eye(nl)
 
         if self.gamma_ != 0:
-            lap_mat = lap_norm(X, n_neighbour=self.k_neighbour, metric=self.manifold_metric, mode=self.knn_mode)
+            lap_mat = lap_norm(X, n_neighbors=self.k_neighbors, metric=self.manifold_metric, mode=self.knn_mode)
             Q_ = np.dot((J + self.gamma_ * lap_mat), x_kernel_matrix) + self.sigma_ * unit_matrix
         else:
             Q_ = np.dot(J, x_kernel_matrix) + self.sigma_ * centering_matrix
