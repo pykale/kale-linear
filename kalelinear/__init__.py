@@ -6,7 +6,7 @@ Learning harmonized or individualized models from multi-source/multi-view data i
 
 from importlib import import_module
 
-__version__ = "0.1.0a1"
+__version__ = "0.1.0b1"
 
 __all__ = ["transformer", "estimator", "embed", "predict"]
 

@@ -85,6 +85,8 @@ From the root of the repository, run the following commands in your terminal:
    sphinx-build -b html docs/source docs/build/html
    ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
+
 ### Public API
 
 ```python
