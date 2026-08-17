@@ -1,9 +1,11 @@
-Fixes #{issue_number}.
+Fixes #<issue_number>.
 
 ### Description
+
 A few sentences describing the changes proposed in this pull request.
 
 ### Status
+
 **Ready/Work in progress/Hold**
 
 On the right (delete these after selection):

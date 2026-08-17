@@ -72,7 +72,7 @@ pip install pre-commit
 pre-commit install
 ```
 
-This installs the `pre-commit` hooks at `kalelinear\.git\hooks`, to be **triggered by each new commit** to automatically run them *over the files you commit*. Several **important** points to note:
+This installs the `pre-commit` hooks at `.git\hooks`, to be **triggered by each new commit** to automatically run them *over the files you commit*. Several **important** points to note:
 
 - Pre-commit hooks are configured in [`.pre-commit-config.yaml`](.pre-commit-config.yaml). Only administrators should modify it.
 - These hooks, e.g. [black](https://black.readthedocs.io/en/stable/index.html) and [isort](https://pycqa.github.io/isort/), will **automatically fix** some problems by **changing the files**, so please check the changes after you trigger `commit`.
