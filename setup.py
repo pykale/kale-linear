@@ -60,7 +60,7 @@ def read(*names, **kwargs):
 
 setup(
     name="kalelinear",
-    version="0.1.0a1",
+    version="0.1.0b1",
     description="Non-deep knowledge-aware machine learning from multiple sources/views in Python",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
@@ -80,7 +80,7 @@ setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",

@@ -1,0 +1,33 @@
+{
+  "changelog_type": "pull_request",
+  "header_prefix": "Version",
+  "commit_changelog": true,
+  "comment_changelog": true,
+  "include_unlabeled_changes": true,
+  "unlabeled_group_title": "Other Changes",
+  "pull_request_title_regex": "(?i:release)",
+  "version_regex": "v?[0-9]+[.]+[0-9]+[.]+[0-9]+([ab][0-9]+)?",
+  "exclude_labels": ["dependabot", "bot", "ci"],
+  "group_config": [
+    {
+      "title": "New Features",
+      "labels": ["feature", "enhancement"]
+    },
+    {
+      "title": "Bug Fixes",
+      "labels": ["bug", "bugfix"]
+    },
+    {
+      "title": "Code Improvements",
+      "labels": ["improvements", "refactor", "refactoring"]
+    },
+    {
+      "title": "Documentation",
+      "labels": ["documentation", "docs", "doc"]
+    },
+    {
+      "title": "Tests",
+      "labels": ["tests", "testing", "test"]
+    }
+  ]
+}
