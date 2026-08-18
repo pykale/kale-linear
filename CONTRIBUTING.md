@@ -72,7 +72,7 @@ pip install pre-commit
 pre-commit install
 ```
 
-This installs the `pre-commit` hooks at `.git\hooks`, to be **triggered by each new commit** to automatically run them *over the files you commit*. Several **important** points to note:
+This installs the `pre-commit` hooks at `.git/hooks`, to be **triggered by each new commit** to automatically run them *over the files you commit*. Several **important** points to note:
 
 - Pre-commit hooks are configured in [`.pre-commit-config.yaml`](.pre-commit-config.yaml). Only administrators should modify it.
 - These hooks, e.g. [black](https://black.readthedocs.io/en/stable/index.html) and [isort](https://pycqa.github.io/isort/), will **automatically fix** some problems by **changing the files**, so please check the changes after you trigger `commit`.
@@ -212,13 +212,13 @@ Releases are created manually in GitHub, with automatic upload to PyPI by the [r
 
 #### Versions
 
-We follow the [Semantic Versioning](https://semver.org/) guidelines. Given a version number `MAJOR.MINOR.PATCH`, increment the:
+We follow a [Semantic Versioning](https://semver.org/) compatible policy: given a version number `MAJOR.MINOR.PATCH`, increment the:
 
 - MAJOR version when you make incompatible API changes,
 - MINOR version when you add functionality in a backwards-compatible manner, and
 - PATCH version when you make backwards-compatible bug fixes.
 
-Additional labels for pre-release and build metadata are available as extensions to the `MAJOR.MINOR.PATCH` format.
+Because the package is distributed on PyPI, the actual version strings must be valid [PEP 440](https://peps.python.org/pep-0440/) identifiers. PEP 440 writes prereleases without a hyphen (e.g. `0.1.0b1`), whereas SemVer would write the same release as `0.1.0-beta.1`; use the PEP 440 form in `setup.py`, `kalelinear/__init__.py`, GitHub releases, and changelog headings.
 
 #### Release checklist
 

@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-# 🐛 Bug
+# Bug
 
 <!-- A clear and concise description of what the bug is. -->
 
@@ -27,8 +27,9 @@ Or, code snippet to reproduce the behavior
 # (We much prefer small snippets rather than links to existing libraries!)
 ```
 
-** Stack trace/error message **
-```
+**Stack trace/error message**
+
+```bash
 // Paste the bad output here!
 ```
 
@@ -40,11 +41,11 @@ Or, code snippet to reproduce the behavior
 
 Please fill in the checklist below:
 
- - OS (e.g., Linux):
- - Python version:
- - How you installed kalelinear (`pip`, source):
- - Package versions (e.g., `numpy`, `scipy`, `scikit-learn`, `pandas`, `tensorly`, `cvxopt`, `osqp`):
- - Any other relevant information:
+- OS (e.g., Linux):
+- Python version:
+- How you installed kalelinear (`pip`, source):
+- Package versions (e.g., `numpy`, `scipy`, `scikit-learn`, `pandas`, `tensorly`, `cvxopt`, `osqp`):
+- Any other relevant information:
 
 ## Additional context
 
