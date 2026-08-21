@@ -21,6 +21,8 @@ The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem 
   - Joint Distribution Adaptation (JDA) [[3](#references)]
   - Balanced Distribution Adaptation (BDA) [[4](#references)]
   - Maximum Independence Domain Adaptation (MIDA) [[5](#references)]
+  - Common and Individual Feature Extraction (CIFE) [[11](#references)]
+  - Angle-based Joint and Individual Variation Explained (AJIVE) [[12](#references)]
 - Estimator models for classification:
   - Manifold Regularization Learning Framework (LapSVM, LapRLS) [[6](#references)]
   - Adaptation Regularization Learning Framework (ARSVM, ARRLS) [[7](#references)]
@@ -99,6 +101,7 @@ Worked examples for the main transformers and estimators are collected in
 
 - Learn a domain-invariant embedding with TCA
 - Use MIDA with categorical covariates
+- Extract common and individual features across groups with CIFE or AJIVE
 - Train a domain adaptation classifier (ARSVM, ARRLS)
 - Train a manifold-regularized classifier (LapSVM, LapRLS)
 
@@ -123,6 +126,10 @@ Worked examples for the main transformers and estimators are collected in
 [9] Zhou, S., 2022. [Interpretable Domain-Aware Learning for Neuroimage Classification](https://etheses.whiterose.ac.uk/id/eprint/31044/) (Doctoral dissertation, University of Sheffield).
 
 [10] Zhou, S., Luo, J., Jiang, Y., Wang, H., Lu, H. and Gong, G., 2025. [Group-specific discriminant analysis enhances detection of sex differences in brain functional network lateralization](https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giaf082/8244707). _GigaScience_, 14, p.giaf082.
+
+[11] Zhou, G., Cichocki, A., Zhang, Y. and Mandic, D., 2016. [Group component analysis for multiblock data: Common and individual feature extraction](https://ieeexplore.ieee.org/abstract/document/7310871). _IEEE Transactions on Neural Networks and Learning Systems_, 27(11), pp.2426-2439.
+
+[12] Feng, Q., Jiang, M., Hannig, J. and Marron, J.S., 2018. [Angle-based joint and individual variation explained](https://www.sciencedirect.com/science/article/abs/pii/S0047259X18302831). _Journal of Multivariate Analysis_, 166, pp.241-265.
 
 ## Other open domain adaptation repositories
 

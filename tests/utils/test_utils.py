@@ -108,3 +108,37 @@ def make_domain_shifted_dataset(
     domains = domains[idx]
 
     return X, y, domains
+
+
+def make_common_individual_dataset(
+    n_blocks=3,
+    n_features=30,
+    n_common=2,
+    individual_ranks=(3, 4, 2),
+    n_samples=(60, 50, 70),
+    noise=0.0,
+    random_state=None,
+):
+    """Create multiblock data with planted common and individual subspaces.
+
+    Each block is generated as ``B_c A_c^T + B_i A_i^T (+ noise)`` where
+    ``A_c`` is a common feature-space basis shared by all blocks and ``A_i``
+    is a block-specific basis orthogonal to ``A_c``.
+    """
+    random_state = check_random_state(random_state)
+    common_basis, _ = np.linalg.qr(random_state.randn(n_features, n_common))
+    blocks = []
+    group_lists = []
+    for k in range(n_blocks):
+        individual_basis, _ = np.linalg.qr(random_state.randn(n_features, individual_ranks[k]))
+        individual_basis -= common_basis @ (common_basis.T @ individual_basis)
+        individual_basis, _ = np.linalg.qr(individual_basis)
+        block = random_state.randn(n_samples[k], n_common) @ common_basis.T
+        block += random_state.randn(n_samples[k], individual_ranks[k]) @ individual_basis.T
+        if noise:
+            block += noise * random_state.randn(n_samples[k], n_features)
+        blocks.append(block)
+        group_lists.append(np.full(n_samples[k], k))
+    X = np.vstack(blocks)
+    groups = np.concatenate(group_lists)
+    return X, groups, blocks, common_basis

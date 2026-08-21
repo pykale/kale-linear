@@ -27,3 +27,13 @@ Transformers
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. autoclass:: CIFE
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: AJIVE
+   :members:
+   :undoc-members:
+   :show-inheritance:

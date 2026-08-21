@@ -35,3 +35,15 @@ the same transformer classes as :mod:`kalelinear.transformer`.
    :undoc-members:
    :show-inheritance:
    :no-index:
+
+.. autoclass:: CIFE
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :no-index:
+
+.. autoclass:: AJIVE
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :no-index:

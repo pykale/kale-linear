@@ -14,8 +14,8 @@ covariates, side information, or unlabeled target samples.
 Main Features
 -------------
 
-* Transformer models for learning feature embeddings: MPCA, TCA, JDA, BDA, and
-  MIDA.
+* Transformer models for learning feature embeddings: MPCA, TCA, JDA, BDA,
+  MIDA, CIFE, and AJIVE.
 * Estimator models for classification and adaptation: LapSVM, LapRLS, ARSVM,
   ARRLS, CoIRSVM, CoIRLS, and GSDA.
 * NumPy-compatible inputs and outputs.
