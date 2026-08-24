@@ -27,15 +27,22 @@ _FERROR = 1e-10
 
 def _jive_rand_null_norm(data, basis, n_sim, random_state):
     """Energy of data on random directions orthogonal to ``basis``."""
-    dim = basis.shape[0]
+    n_ambient_dims = basis.shape[0]
+    if basis.shape[1] >= n_ambient_dims:
+        return np.zeros(n_sim)
     null_norms = np.empty(n_sim)
     for i in range(n_sim):
         current = basis.copy()
         directions = []
         for _ in range(basis.shape[1]):
-            direction = random_state.randn(dim)
+            direction = random_state.randn(n_ambient_dims)
             direction = direction - current @ (current.T @ direction)
-            direction /= np.linalg.norm(direction)
+            norm = np.linalg.norm(direction)
+            while norm == 0:
+                direction = random_state.randn(n_ambient_dims)
+                direction = direction - current @ (current.T @ direction)
+                norm = np.linalg.norm(direction)
+            direction /= norm
             directions.append(direction)
             current = np.column_stack((current, direction))
         directions = np.column_stack(directions)

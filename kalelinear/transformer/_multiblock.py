@@ -80,6 +80,12 @@ def _check_per_block_ranks(n_components, n_blocks, name):
         raise ValueError(f"{name} must be an integer or a sequence with one value per block.")
     if not np.issubdtype(ranks.dtype, np.number):
         raise ValueError(f"{name} must contain numeric values.")
+    if np.any(np.isnan(ranks)):
+        raise ValueError(f"{name} must not contain NaN values.")
+    if np.any(ranks < 0):
+        raise ValueError(f"{name} must contain non-negative values.")
+    if not np.all(np.equal(ranks, np.floor(ranks))):
+        raise ValueError(f"{name} must contain integer values.")
     return ranks.astype(int)
 
 
@@ -130,8 +136,6 @@ class BaseCommonIndividualTransformer(ClassNamePrefixFeaturesOutMixin, Transform
         self.n_features_in_ = blocks[0].shape[1]
         self.n_blocks_ = len(blocks)
         self.block_sizes_ = np.array([block.shape[0] for block in blocks])
-        self.blocks_ = blocks
-        self.groups_ = groups
         self.random_state_ = check_random_state(self.random_state)
         self._fit_blocks(blocks)
         self._n_features_out = self.n_common_components_
@@ -185,6 +189,8 @@ class BaseCommonIndividualTransformer(ClassNamePrefixFeaturesOutMixin, Transform
         """
         check_is_fitted(self, "individual_components_")
         blocks, _ = _check_multiblock_input(X, groups)
+        if len(blocks) != self.n_blocks_:
+            raise ValueError(f"Expected {self.n_blocks_} blocks, got {len(blocks)}.")
         if any(block.shape[1] != self.n_features_in_ for block in blocks):
             raise ValueError(f"Expected {self.n_features_in_} features in every block, got mismatched blocks.")
         return [block @ components for block, components in zip(blocks, self.individual_components_)]
