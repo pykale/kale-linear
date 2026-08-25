@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Kale-Linear is a Python library for non-deep, knowledge-aware machine learning
+KaleLinear is a Python library for non-deep, knowledge-aware machine learning
 from multiple sources, domains, or views. It provides NumPy-based
 implementations of transfer learning, domain adaptation, manifold
 regularization, and group-aware linear learning methods with a scikit-learn

@@ -65,6 +65,9 @@ def test_cife_transform_consistency(multiblock_data):
     z = cife.transform(X)
     testing.assert_allclose(z, X @ cife.common_components_)
     testing.assert_allclose(cife.transform(blocks), z)
+    single_block = cife.transform([blocks[0]])
+    testing.assert_allclose(single_block, blocks[0] @ cife.common_components_)
+    testing.assert_allclose(cife.transform((blocks[0],)), single_block)
 
     individual = cife.transform_individual(X, groups=groups)
     assert [scores.shape for scores in individual] == [(60, 3), (50, 4), (70, 2)]

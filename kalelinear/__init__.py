@@ -1,7 +1,7 @@
 """
 kalelinear.
 
-Learning harmonized or individualized models from multi-source/multi-view data in linear or reproducing kernel Hilbert spaces (RKHS).
+Non-deep machine learning that learns transferable, shared, or group-specific models from data across multiple sources, groups, blocks, or views.
 """
 
 from importlib import import_module

@@ -13,7 +13,7 @@ from sklearn.utils._param_validation import Interval
 from sklearn.utils.validation import check_is_fitted, check_random_state
 
 
-def _check_multiblock_input(X, groups=None):
+def _check_multiblock_input(X, groups=None, min_blocks=2):
     """Validate a multiblock input and return one matrix per block.
 
     Parameters
@@ -24,6 +24,10 @@ def _check_multiblock_input(X, groups=None):
         blocks must share the same feature space (columns).
     groups : array-like of shape (n_samples,), default=None
         Block id for each sample when ``X`` is a single stacked matrix.
+    min_blocks : int, default=2
+        Minimum number of blocks required. The common projection in
+        :meth:`transform` only needs one block, so callers that project new
+        samples can pass ``min_blocks=1``.
 
     Returns
     -------
@@ -48,7 +52,7 @@ def _check_multiblock_input(X, groups=None):
             elif block.shape[1] != n_features:
                 raise ValueError("All blocks must share the same number of features.")
             blocks.append(block)
-        if len(blocks) < 2:
+        if len(blocks) < min_blocks:
             raise ValueError("At least two blocks are required for common and individual feature extraction.")
         return blocks, None
 
@@ -62,7 +66,7 @@ def _check_multiblock_input(X, groups=None):
         raise ValueError("`groups` must be a 1D array aligned with the rows of `X`.")
     block_ids = np.unique(groups)
     blocks = [X[groups == block_id] for block_id in block_ids]
-    if len(blocks) < 2:
+    if len(blocks) < min_blocks:
         raise ValueError("At least two blocks are required for common and individual feature extraction.")
     if any(block.shape[0] == 0 for block in blocks):
         raise ValueError("Each block must contain at least one sample.")
@@ -151,7 +155,8 @@ class BaseCommonIndividualTransformer(ClassNamePrefixFeaturesOutMixin, Transform
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of array-like
-            New samples, either stacked or given as a list of blocks.
+            New samples, either stacked or given as a list of blocks. A
+            single block is accepted for the common projection.
         groups : array-like of shape (n_samples,), default=None
             Ignored for the common projection. Present for API consistency.
 
@@ -162,7 +167,7 @@ class BaseCommonIndividualTransformer(ClassNamePrefixFeaturesOutMixin, Transform
         """
         check_is_fitted(self, "common_components_")
         if isinstance(X, (list, tuple)):
-            blocks, _ = _check_multiblock_input(X)
+            blocks, _ = _check_multiblock_input(X, min_blocks=1)
             X_stacked = np.vstack(blocks)
         else:
             X_stacked = np.asarray(X, dtype=float)

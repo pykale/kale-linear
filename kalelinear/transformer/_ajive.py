@@ -202,10 +202,10 @@ class AJIVE(BaseCommonIndividualTransformer):
         wedin_ssv_bound = np.percentile(wedin_ssv_bounds, self.percentile)
         random_ssvs = _random_direction_ssv(D, ranks, 100, self.random_state_)
         random_ssv_bound = np.percentile(random_ssvs, 95)
-        if random_ssv_bound > np.percentile(wedin_ssv_bounds, 5):
-            joint_rank = int(np.sum(s_stacked**2 + _FERROR > random_ssv_bound))
-        else:
-            joint_rank = int(np.sum(s_stacked**2 + _FERROR > wedin_ssv_bound))
+        # Take the more conservative (larger) of the two perturbation bounds,
+        # following the reference implementation: max(wedin, random).
+        joint_threshold = max(wedin_ssv_bound, random_ssv_bound)
+        joint_rank = int(np.sum(s_stacked**2 + _FERROR > joint_threshold))
         if self.n_common_components is not None:
             joint_rank = min(int(self.n_common_components), len(s_stacked))
 

@@ -125,6 +125,18 @@ def make_common_individual_dataset(
     ``A_c`` is a common feature-space basis shared by all blocks and ``A_i``
     is a block-specific basis orthogonal to ``A_c``.
     """
+    individual_ranks = np.asarray(individual_ranks)
+    n_samples = np.asarray(n_samples)
+    if individual_ranks.ndim != 1 or individual_ranks.shape[0] != n_blocks:
+        raise ValueError(
+            f"`individual_ranks` must be a sequence with one rank per block: "
+            f"expected {n_blocks} values, got {individual_ranks.size}."
+        )
+    if n_samples.ndim != 1 or n_samples.shape[0] != n_blocks:
+        raise ValueError(
+            f"`n_samples` must be a sequence with one sample count per block: "
+            f"expected {n_blocks} values, got {n_samples.size}."
+        )
     random_state = check_random_state(random_state)
     common_basis, _ = np.linalg.qr(random_state.randn(n_features, n_common))
     blocks = []
@@ -142,3 +154,19 @@ def make_common_individual_dataset(
     X = np.vstack(blocks)
     groups = np.concatenate(group_lists)
     return X, groups, blocks, common_basis
+
+
+def test_make_common_individual_dataset_validates_block_parameters():
+    with pytest.raises(ValueError, match="individual_ranks"):
+        make_common_individual_dataset(n_blocks=4)
+    with pytest.raises(ValueError, match="n_samples"):
+        make_common_individual_dataset(n_blocks=4, individual_ranks=(1, 2, 3, 4))
+
+
+def test_make_common_individual_dataset_accepts_custom_n_blocks():
+    X, groups, blocks, _ = make_common_individual_dataset(
+        n_blocks=2, individual_ranks=(1, 2), n_samples=(20, 30), random_state=0
+    )
+    assert len(blocks) == 2
+    assert [block.shape[0] for block in blocks] == [20, 30]
+    assert groups.shape == (50,)
