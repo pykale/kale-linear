@@ -11,7 +11,7 @@ Getting Started
    installation
    tutorial
 
-kalelinear API
+KaleLinear API
 ---------------
 
 .. toctree::

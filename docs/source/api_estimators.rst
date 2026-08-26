@@ -3,6 +3,9 @@ Estimators
 
 .. currentmodule:: kalelinear.estimator
 
+The estimator classes are also available through the PyKale-compatible alias
+:mod:`kalelinear.predict`.
+
 .. autoclass:: LapSVM
    :members:
    :undoc-members:

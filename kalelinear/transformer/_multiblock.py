@@ -1,5 +1,5 @@
 # =============================================================================
-# @author: Shuo Zhou, Lalu Muhammad Riza Rizky, The University of Sheffield
+# @author: Shuo Zhou, The University of Sheffield
 # @contact: shuo.zhou@sheffield.ac.uk
 # =============================================================================
 """Shared base classes for multiblock common and individual feature transformers."""
@@ -64,7 +64,8 @@ def _check_multiblock_input(X, groups=None, min_blocks=2):
     groups = np.asarray(groups)
     if groups.ndim != 1 or groups.shape[0] != X.shape[0]:
         raise ValueError("`groups` must be a 1D array aligned with the rows of `X`.")
-    block_ids = np.unique(groups)
+    block_ids, first_idx = np.unique(groups, return_index=True)
+    block_ids = block_ids[np.argsort(first_idx)]
     blocks = [X[groups == block_id] for block_id in block_ids]
     if len(blocks) < min_blocks:
         raise ValueError("At least two blocks are required for common and individual feature extraction.")

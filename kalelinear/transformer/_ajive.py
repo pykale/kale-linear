@@ -1,5 +1,5 @@
 # =============================================================================
-# @author: Shuo Zhou, Lalu Muhammad Riza Rizky, The University of Sheffield
+# @author: Shuo Zhou, The University of Sheffield
 # @contact: shuo.zhou@sheffield.ac.uk
 # =============================================================================
 """Angle-based Joint and Individual Variation Explained (AJIVE) implementation.
@@ -11,7 +11,7 @@ individual variation explained. Journal of Multivariate Analysis, 166,
 pp.241-265.
 
 The algorithm follows the authors' reference MATLAB implementation
-(MeileiJiang/AJIVE_Project) with the same perturbation-bound and rank
+(MeileiJiang/AJIVE_Project on GitHub) with the same perturbation-bound and rank
 selection steps.
 """
 

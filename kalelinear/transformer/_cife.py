@@ -11,8 +11,8 @@ analysis for multiblock data: Common and individual feature extraction.
 IEEE Transactions on Neural Networks and Learning Systems, 27(11),
 pp.2426-2439.
 
-The common orthogonal basis extraction (COBE) steps follow the authors'
-reference implementations (pycifa and the accompanying MATLAB code).
+The common orthogonal basis extraction (COBE) steps follow the pycifa and the
+accompanying MATLAB code implementations at https://github.com/kharyuk/pycifa.
 """
 
 from numbers import Integral, Real

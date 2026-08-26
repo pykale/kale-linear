@@ -3,6 +3,9 @@ Transformers
 
 .. currentmodule:: kalelinear.transformer
 
+The transformer classes are also available through the PyKale-compatible alias
+:mod:`kalelinear.embed`.
+
 .. autoclass:: MPCA
    :members:
    :undoc-members:
