@@ -76,6 +76,30 @@ def test_cife_transform_consistency(multiblock_data):
         testing.assert_allclose(expected, actual)
 
 
+def test_cife_transform_individual_rejects_unknown_block_ids(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    cife = CIFE(n_common_components=2, n_individual_components=[3, 4, 2], random_state=0)
+    cife.fit(X, groups=groups)
+    with pytest.raises(ValueError, match="block ids"):
+        cife.transform_individual(X, groups=groups + 10)
+
+
+def test_cife_transform_individual_preserves_block_assignment(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    cife = CIFE(n_common_components=2, n_individual_components=[3, 4, 2], random_state=0)
+    cife.fit(X, groups=groups)
+    expected = cife.transform_individual(X, groups=groups)
+    rng = np.random.default_rng(0)
+    perm = rng.permutation(len(X))
+    actual = cife.transform_individual(X[perm], groups=groups[perm])
+    position = np.empty(len(perm), dtype=int)
+    position[perm] = np.arange(len(perm))
+    for k, block_id in enumerate(np.unique(groups)):
+        row_indices = np.flatnonzero(groups == block_id)
+        row_order = np.argsort(position[row_indices])
+        testing.assert_allclose(actual[k], expected[k][row_order])
+
+
 def test_cife_fit_transform_and_clone(multiblock_data):
     X, groups, _, _ = multiblock_data
     cife = CIFE(n_common_components=2, random_state=0)
@@ -101,6 +125,12 @@ def test_cife_full_rank_block_requires_pca_dim():
     cife = CIFE(pca_dim=0.5, random_state=0)
     cife.fit(blocks)
     assert cife.n_common_components_ == 0
+
+
+def test_cife_rejects_infinite_individual_ranks(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    with pytest.raises(ValueError, match="infinite"):
+        CIFE(n_individual_components=[np.inf, 3, 2], random_state=0).fit(X, groups=groups)
 
 
 def test_cife_input_validation():

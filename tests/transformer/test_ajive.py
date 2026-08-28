@@ -96,6 +96,30 @@ def test_ajive_transform_consistency(multiblock_data):
         testing.assert_allclose(expected, actual)
 
 
+def test_ajive_transform_individual_rejects_unknown_block_ids(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    ajive = AJIVE(n_resamples=50, random_state=0)
+    ajive.fit(X, groups=groups)
+    with pytest.raises(ValueError, match="block ids"):
+        ajive.transform_individual(X, groups=groups + 10)
+
+
+def test_ajive_transform_individual_preserves_block_assignment(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    ajive = AJIVE(n_resamples=50, random_state=0)
+    ajive.fit(X, groups=groups)
+    expected = ajive.transform_individual(X, groups=groups)
+    rng = np.random.default_rng(0)
+    perm = rng.permutation(len(X))
+    actual = ajive.transform_individual(X[perm], groups=groups[perm])
+    position = np.empty(len(perm), dtype=int)
+    position[perm] = np.arange(len(perm))
+    for k, block_id in enumerate(np.unique(groups)):
+        row_indices = np.flatnonzero(groups == block_id)
+        row_order = np.argsort(position[row_indices])
+        testing.assert_allclose(actual[k], expected[k][row_order])
+
+
 def test_ajive_fit_transform_and_clone(multiblock_data):
     X, groups, _, _ = multiblock_data
     ajive = AJIVE(n_resamples=50, random_state=0)
@@ -121,3 +145,9 @@ def test_ajive_input_validation():
         AJIVE().fit([np.ones((5, 3)), np.ones((5, 4))])
     with pytest.raises(ValueError, match="initial_ranks"):
         AJIVE(initial_ranks=[5, 6]).fit([np.ones((4, 3)), np.ones((4, 3))])
+
+
+def test_ajive_zero_energy_block_is_rejected():
+    blocks = [np.zeros((5, 3)), np.ones((5, 3))]
+    with pytest.raises(ValueError, match="positive values"):
+        AJIVE(n_resamples=50, random_state=0).fit(blocks)

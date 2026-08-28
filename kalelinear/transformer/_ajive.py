@@ -157,7 +157,9 @@ class AJIVE(BaseCommonIndividualTransformer):
             ranks = []
             for block in blocks:
                 singular_values = np.linalg.svd(block, compute_uv=False)
-                if singular_values.size == 0:
+                if singular_values.size == 0 or singular_values[0] == 0:
+                    # A zero-energy block has no signal rank; the positive-rank
+                    # validation below then rejects it with a clear message.
                     ranks.append(0)
                     continue
                 explained = np.cumsum(singular_values**2) / np.sum(singular_values**2)
