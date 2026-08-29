@@ -43,9 +43,10 @@ def test_check_multiblock_input_rejects_single_block_list():
 
 
 def test_check_multiblock_input_accepts_single_block_with_min_blocks_one():
-    blocks, groups = _check_multiblock_input([np.ones((5, 3))], min_blocks=1)
+    blocks, groups, block_ids = _check_multiblock_input([np.ones((5, 3))], min_blocks=1)
     assert len(blocks) == 1
     assert groups is None
+    testing.assert_array_equal(block_ids, [0])
 
 
 def test_check_multiblock_input_rejects_1d_stacked():
@@ -67,7 +68,7 @@ def test_check_multiblock_input_validates_groups_shape():
 
 
 def test_check_multiblock_input_rejects_single_group():
-    with pytest.raises(ValueError, match="(?i)at least two blocks"):
+    with pytest.raises(ValueError, match="(?i)at least 2 blocks"):
         _check_multiblock_input(np.ones((10, 3)), groups=np.zeros(10, dtype=int))
 
 
@@ -81,8 +82,9 @@ def test_check_multiblock_input_rejects_nan_group_block():
 def test_check_multiblock_input_orders_blocks_by_first_appearance():
     X = np.arange(6).reshape(6, 1)
     groups = np.array([2, 2, 0, 0, 1, 1])
-    blocks, _ = _check_multiblock_input(X, groups)
+    blocks, _, block_ids = _check_multiblock_input(X, groups)
     testing.assert_array_equal([block[0, 0] for block in blocks], [0.0, 2.0, 4.0])
+    testing.assert_array_equal(block_ids, [2, 0, 1])
 
 
 def test_check_per_block_ranks_accepts_integer():
