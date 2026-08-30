@@ -127,6 +127,16 @@ def test_cife_full_rank_block_requires_pca_dim():
     assert cife.n_common_components_ == 0
 
 
+def test_cife_zero_common_components_skips_full_rank_validation():
+    random_state = np.random.RandomState(2)
+    blocks = [random_state.randn(40, 10) for _ in range(3)]
+    cife = CIFE(n_common_components=0, random_state=0)
+    cife.fit(blocks)
+    assert cife.n_common_components_ == 0
+    assert cife.common_components_.shape == (10, 0)
+    testing.assert_array_equal(cife.individual_ranks_, [10, 10, 10])
+
+
 def test_cife_rejects_infinite_individual_ranks(multiblock_data):
     X, groups, _, _ = multiblock_data
     with pytest.raises(ValueError, match="infinite"):

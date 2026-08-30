@@ -74,6 +74,11 @@ def _cobe_common_basis(blocks, c, max_iter, tol, epsilon, pca_dim, random_state)
     """
     n_blocks = len(blocks)
     D = blocks[0].shape[0]
+    if c is not None and c <= 0:
+        # No common subspace is requested, so skip the per-block column-space
+        # validation entirely; the individual components are computed from the
+        # untouched blocks.
+        return np.zeros((D, 0))
     bases = []
     ranks = []
     for Y in blocks:
@@ -82,8 +87,6 @@ def _cobe_common_basis(blocks, c, max_iter, tol, epsilon, pca_dim, random_state)
         ranks.append(rank)
     min_rank = min(ranks)
     if min_rank == 0:
-        return np.zeros((D, 0))
-    if c is not None and c <= 0:
         return np.zeros((D, 0))
 
     order = np.argsort(ranks)

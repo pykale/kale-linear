@@ -26,15 +26,22 @@ _FERROR = 1e-10
 
 
 def _jive_rand_null_norm(data, basis, n_sim, random_state):
-    """Energy of data on random directions orthogonal to ``basis``."""
+    """Operator norm of data on random directions orthogonal to ``basis``."""
     n_ambient_dims = basis.shape[0]
-    if basis.shape[1] >= n_ambient_dims:
+    n_null_dims = n_ambient_dims - basis.shape[1]
+    if n_null_dims <= 0:
         return np.zeros(n_sim)
+    # ``initial_ranks`` may legally exceed the null-space dimension, in which
+    # case requesting one orthogonal direction per basis vector would run out
+    # of genuine null directions: once ``current`` spans the ambient space the
+    # retry normalises round-off noise (or never terminates in exact
+    # arithmetic). Only ask for as many directions as the null space can hold.
+    n_directions = min(basis.shape[1], n_null_dims)
     null_norms = np.empty(n_sim)
     for i in range(n_sim):
         current = basis.copy()
         directions = []
-        for _ in range(basis.shape[1]):
+        for _ in range(n_directions):
             direction = random_state.randn(n_ambient_dims)
             direction = direction - current @ (current.T @ direction)
             norm = np.linalg.norm(direction)
@@ -46,7 +53,11 @@ def _jive_rand_null_norm(data, basis, n_sim, random_state):
             directions.append(direction)
             current = np.column_stack((current, direction))
         directions = np.column_stack(directions)
-        null_norms[i] = np.linalg.norm(data @ directions)
+        # The Wedin bound needs the spectral (2-)norm, matching the reference
+        # implementation's MATLAB ``norm(data * nulldir)``; the default
+        # Frobenius norm grows with the number of sampled directions and would
+        # systematically inflate the angle bound.
+        null_norms[i] = np.linalg.norm(data @ directions, ord=2)
     return null_norms
 
 

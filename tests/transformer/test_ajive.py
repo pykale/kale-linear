@@ -4,6 +4,7 @@ from numpy import testing
 from sklearn.base import clone
 
 from kalelinear.transformer import AJIVE
+from kalelinear.transformer._ajive import _jive_rand_null_norm
 from tests.utils.test_utils import make_common_individual_dataset
 
 
@@ -151,3 +152,25 @@ def test_ajive_zero_energy_block_is_rejected():
     blocks = [np.zeros((5, 3)), np.ones((5, 3))]
     with pytest.raises(ValueError, match="positive values"):
         AJIVE(n_resamples=50, random_state=0).fit(blocks)
+
+
+def test_jive_rand_null_norm_limits_directions_to_null_space_dimension():
+    rng = np.random.RandomState(0)
+    n_ambient, rank = 30, 20  # the null space has only 10 dimensions
+    data = rng.randn(60, n_ambient)
+    basis, _ = np.linalg.qr(rng.randn(n_ambient, rank))
+
+    null_norms = _jive_rand_null_norm(data, basis, 5, rng)
+    # With the direction count capped at the null-space dimension, the sampled
+    # directions span the entire null space and the spectral norm becomes the
+    # exact operator norm of the data restricted to that null space.
+    expected = np.linalg.norm(data - data @ basis @ basis.T, ord=2)
+    testing.assert_allclose(null_norms, expected, rtol=1e-8)
+
+
+def test_ajive_accepts_initial_ranks_larger_than_null_space(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    ajive = AJIVE(initial_ranks=[20, 18, 17], n_resamples=20, random_state=0)
+    ajive.fit(X, groups=groups)
+    assert ajive.common_components_.shape == (X.shape[1], ajive.n_common_components_)
+    assert np.all(np.isfinite(ajive.common_components_))
