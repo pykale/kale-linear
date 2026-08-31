@@ -184,6 +184,12 @@ class AJIVE(BaseCommonIndividualTransformer):
                     f"`initial_ranks[{n}]` must be between 1 and min(samples, features) "
                     f"= {min(block.shape)}, got {rank}."
                 )
+            if not np.any(block):
+                # A zero-energy block has no row or column space to share: the
+                # perturbation bound would divide by a zero singular value and
+                # every residual direction would be misclassified as individual
+                # signal. Reject it even when the ranks were supplied explicitly.
+                raise ValueError(f"Block {n} has zero energy, so `initial_ranks[{n}]` must not be positive.")
         return ranks
 
     def _fit_blocks(self, blocks):

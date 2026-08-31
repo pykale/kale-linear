@@ -154,6 +154,12 @@ def test_ajive_zero_energy_block_is_rejected():
         AJIVE(n_resamples=50, random_state=0).fit(blocks)
 
 
+def test_ajive_rejects_zero_energy_block_with_explicit_initial_ranks():
+    blocks = [np.zeros((5, 3)), np.ones((5, 3))]
+    with pytest.raises(ValueError, match="zero energy"):
+        AJIVE(initial_ranks=[2, 1], n_resamples=20, random_state=0).fit(blocks)
+
+
 def test_jive_rand_null_norm_limits_directions_to_null_space_dimension():
     rng = np.random.RandomState(0)
     n_ambient, rank = 30, 20  # the null space has only 10 dimensions
