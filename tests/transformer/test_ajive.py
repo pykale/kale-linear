@@ -174,3 +174,23 @@ def test_ajive_accepts_initial_ranks_larger_than_null_space(multiblock_data):
     ajive.fit(X, groups=groups)
     assert ajive.common_components_.shape == (X.shape[1], ajive.n_common_components_)
     assert np.all(np.isfinite(ajive.common_components_))
+
+
+def test_ajive_common_rank_is_capped_by_smallest_initial_rank():
+    rng = np.random.RandomState(0)
+    D = 10
+    # e2 is shared by blocks 1-2 only; the joint space shared by every block
+    # is span{e1}, so at most min(initial_ranks) = 1 component can be common.
+    V1 = np.eye(D)[[0, 1]].T
+    V2 = np.eye(D)[[0, 1]].T
+    V3 = np.eye(D)[[0]].T
+    blocks = [rng.randn(40, V.shape[1]) @ V.T for V in (V1, V2, V3)]
+    ajive = AJIVE(
+        n_common_components=5,  # more than the theoretical joint-space dimension
+        initial_ranks=[2, 2, 1],
+        n_resamples=50,
+        random_state=0,
+    )
+    ajive.fit(blocks)
+    assert ajive.n_common_components_ <= 1
+    assert ajive.common_components_.shape[1] <= 1

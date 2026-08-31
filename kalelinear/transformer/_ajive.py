@@ -210,7 +210,14 @@ class AJIVE(BaseCommonIndividualTransformer):
         angle_bounds = np.vstack(angle_bounds)
 
         _, s_stacked, Vt_stacked = np.linalg.svd(stacked, full_matrices=False)
-        s_stacked = s_stacked[: min(stacked.shape)]
+        max_joint_rank = int(np.min(ranks))
+        # The joint space is a subspace of every block's row space, so it can
+        # have at most ``max_joint_rank`` dimensions. Keep only the leading
+        # singular values and vectors, as the reference implementation computes
+        # only ``min(vecr)`` singular vectors; directions supported by only a
+        # subset of blocks are then never candidates for the common subspace.
+        s_stacked = s_stacked[:max_joint_rank]
+        Vt_stacked = Vt_stacked[:max_joint_rank]
         wedin_ssv_bounds = np.maximum(np.sum(np.cos(np.deg2rad(angle_bounds)) ** 2, axis=0), 1.0)
         wedin_ssv_bound = np.percentile(wedin_ssv_bounds, self.percentile)
         random_ssvs = _random_direction_ssv(D, ranks, 100, self.random_state_)
