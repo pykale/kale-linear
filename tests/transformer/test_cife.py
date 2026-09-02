@@ -143,6 +143,26 @@ def test_cife_rejects_infinite_individual_ranks(multiblock_data):
         CIFE(n_individual_components=[np.inf, 3, 2], random_state=0).fit(X, groups=groups)
 
 
+def test_cife_rejects_invalid_per_block_rank_specs(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    invalid_specs = [
+        ([np.nan, 3, 2], "NaN"),
+        ([1.5, 3, 2], "integer"),
+        ([-1, 3, 2], "non-negative"),
+    ]
+    for spec, message in invalid_specs:
+        with pytest.raises(ValueError, match=message):
+            CIFE(n_individual_components=spec, random_state=0).fit(X, groups=groups)
+
+
+def test_cife_transform_individual_rejects_wrong_number_of_blocks(multiblock_data):
+    X, groups, blocks, _ = multiblock_data
+    cife = CIFE(n_common_components=2, n_individual_components=[3, 4, 2], random_state=0)
+    cife.fit(X, groups=groups)
+    with pytest.raises(ValueError, match="Expected 3 blocks"):
+        cife.transform_individual(blocks[:2])
+
+
 def test_cife_input_validation():
     X = np.ones((10, 4))
     with pytest.raises(ValueError, match="`groups` must be provided"):

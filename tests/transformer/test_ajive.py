@@ -200,3 +200,37 @@ def test_ajive_common_rank_is_capped_by_smallest_initial_rank():
     ajive.fit(blocks)
     assert ajive.n_common_components_ <= 1
     assert ajive.common_components_.shape[1] <= 1
+
+
+def test_ajive_rejects_initial_ranks_exceeding_numerical_rank():
+    rng = np.random.RandomState(0)
+    # The first block has an exactly-zero column, so its numerical rank is 4
+    # even though it is 40 x 5. Requesting rank 5 makes the smallest retained
+    # singular value zero and the Wedin angle bound undefined.
+    blocks = [np.column_stack([rng.randn(40, 4), np.zeros(40)]), rng.randn(40, 5), rng.randn(40, 5)]
+    with pytest.raises(ValueError, match="numerical rank"):
+        AJIVE(initial_ranks=[5, 2, 2], n_resamples=20, random_state=0).fit(blocks)
+
+
+def test_ajive_rejects_invalid_per_block_rank_specs(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    invalid_specs = [
+        ([np.nan, 2, 2], "NaN"),
+        ([np.inf, 2, 2], "infinite"),
+        ([1.5, 2, 2], "integer"),
+        ([-1, 2, 2], "non-negative"),
+    ]
+    for spec, message in invalid_specs:
+        with pytest.raises(ValueError, match=message):
+            AJIVE(n_individual_components=spec, n_resamples=20, random_state=0).fit(X, groups=groups)
+    with pytest.raises(ValueError, match="NaN"):
+        AJIVE(initial_ranks=[np.nan, 2, 2], n_resamples=20, random_state=0).fit(X, groups=groups)
+
+
+def test_ajive_transform_individual_rejects_wrong_number_of_blocks(multiblock_data):
+    X, groups, blocks, _ = multiblock_data
+    ajive = AJIVE(n_resamples=20, random_state=0).fit(X, groups=groups)
+    with pytest.raises(ValueError, match="Expected 3 blocks"):
+        ajive.transform_individual(blocks[:2])
+    with pytest.raises(ValueError, match="Expected 3 blocks"):
+        ajive.transform_individual(blocks + [blocks[0]])

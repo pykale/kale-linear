@@ -63,9 +63,15 @@ def _jive_rand_null_norm(data, basis, n_sim, random_state):
 
 def _wedin_angle_bound(block, n_sim, U, S, V, random_state):
     """Resampled Wedin perturbation-angle bound for one data block."""
+    delta = S[-1]
+    if delta <= S[0] * np.finfo(float).eps:
+        raise ValueError(
+            "`initial_ranks` exceeds the numerical rank of a data block: the "
+            "smallest retained singular value is zero up to machine precision. "
+            "Lower `initial_ranks` for that block."
+        )
     row_bound = _jive_rand_null_norm(block, V, n_sim, random_state)
     column_bound = _jive_rand_null_norm(block.T, U, n_sim, random_state)
-    delta = S[-1]
     ratio = np.maximum(row_bound, column_bound) / delta
     ratio = np.clip(ratio, 0.0, 1.0)
     return np.rad2deg(np.arcsin(ratio))
