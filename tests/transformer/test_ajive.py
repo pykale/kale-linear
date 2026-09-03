@@ -174,11 +174,17 @@ def test_jive_rand_null_norm_limits_directions_to_null_space_dimension():
     testing.assert_allclose(null_norms, expected, rtol=1e-8)
 
 
-def test_ajive_accepts_initial_ranks_larger_than_null_space(multiblock_data):
-    X, groups, _, _ = multiblock_data
-    ajive = AJIVE(initial_ranks=[20, 18, 17], n_resamples=20, random_state=0)
-    ajive.fit(X, groups=groups)
-    assert ajive.common_components_.shape == (X.shape[1], ajive.n_common_components_)
+def test_ajive_accepts_initial_ranks_larger_than_null_space():
+    rng = np.random.RandomState(0)
+    # Full-rank 40 x 8 blocks: requesting 6 components leaves only a
+    # 2-dimensional null space, i.e. fewer orthogonal null directions than the
+    # requested rank. The fit must cap the sampled directions instead of
+    # normalising round-off noise, while the ranks stay below the numerical
+    # rank of each block.
+    blocks = [rng.randn(40, 8) for _ in range(3)]
+    ajive = AJIVE(initial_ranks=[6, 6, 6], n_resamples=20, random_state=0)
+    ajive.fit(blocks)
+    assert ajive.common_components_.shape == (8, ajive.n_common_components_)
     assert np.all(np.isfinite(ajive.common_components_))
 
 
