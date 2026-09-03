@@ -36,6 +36,14 @@ def test_ajive_automatic_initial_ranks(multiblock_data):
     assert ajive.n_common_components_ == 2
 
 
+def test_ajive_automatic_initial_ranks_are_capped_at_numerical_rank(multiblock_data):
+    X, groups, blocks, _ = multiblock_data
+    # variance_threshold=1.0 must not count machine-noise singular values: the
+    # planted blocks have numerical ranks 5, 6 and 4, not the full 30 columns.
+    ranks = AJIVE(variance_threshold=1.0)._resolve_initial_ranks(blocks)
+    testing.assert_array_equal(ranks, [5, 6, 4])
+
+
 def test_ajive_percentile_uses_larger_perturbation_bound(multiblock_data):
     X, groups, _, _ = multiblock_data
     ranks = [

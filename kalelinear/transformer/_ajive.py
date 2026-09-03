@@ -181,7 +181,15 @@ class AJIVE(BaseCommonIndividualTransformer):
                     continue
                 explained = np.cumsum(singular_values**2) / np.sum(singular_values**2)
                 rank = int(np.searchsorted(explained, self.variance_threshold) + 1)
-                ranks.append(int(min(rank, singular_values.size)))
+                # Near variance_threshold == 1 the cumulative sum can round to
+                # just below one, making ``searchsorted`` return the full size
+                # and include machine-noise singular values. Cap the rank by the
+                # numerical rank so the estimate is stable across BLAS/NumPy
+                # round-off and never trips the Wedin bound's rank guard.
+                numerical_rank = int(
+                    np.sum(singular_values > singular_values[0] * max(block.shape) * np.finfo(float).eps)
+                )
+                ranks.append(int(min(rank, numerical_rank)))
             return np.asarray(ranks, dtype=int)
         ranks = _check_per_block_ranks(self.initial_ranks, self.n_blocks_, "initial_ranks")
         for n, (rank, block) in enumerate(zip(ranks, blocks)):
