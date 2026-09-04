@@ -253,7 +253,10 @@ class AJIVE(BaseCommonIndividualTransformer):
         drop_rows = set()
         for n, block in enumerate(blocks):
             projected = block @ row_joint.T
-            low_variance = np.flatnonzero(np.sqrt(np.sum(projected**2, axis=0)) <= thresholds[n] + _FERROR)
+            # The slack must be relative to the block threshold: an absolute
+            # one would dominate once the data is rescaled below it and drop
+            # every candidate joint row.
+            low_variance = np.flatnonzero(np.sqrt(np.sum(projected**2, axis=0)) <= thresholds[n] * (1 + _FERROR))
             drop_rows.update(low_variance.tolist())
         if drop_rows:
             keep_rows = [j for j in range(row_joint.shape[0]) if j not in drop_rows]
@@ -271,7 +274,9 @@ class AJIVE(BaseCommonIndividualTransformer):
             individual = block - block @ common_components @ common_components.T
             s_individual = np.linalg.svd(individual, compute_uv=False)
             if ranks_spec is None:
-                rank = int(np.sum(s_individual + _FERROR > thresholds[n]))
+                # Relative slack keeps the individual rank estimate invariant
+                # to the data scale.
+                rank = int(np.sum(s_individual * (1 + _FERROR) > thresholds[n]))
             else:
                 rank = min(int(ranks_spec[n]), len(s_individual))
             rank = max(rank, 0)

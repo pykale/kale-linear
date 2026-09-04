@@ -216,6 +216,17 @@ def test_ajive_common_rank_is_capped_by_smallest_initial_rank():
     assert ajive.common_components_.shape[1] <= 1
 
 
+def test_ajive_is_invariant_to_data_scaling(multiblock_data):
+    X, groups, blocks, _ = multiblock_data
+    baseline = AJIVE(initial_ranks=[5, 6, 4], n_resamples=50, random_state=0)
+    baseline.fit(blocks)
+    for scale in (1e-12, 1e12):
+        scaled = AJIVE(initial_ranks=[5, 6, 4], n_resamples=50, random_state=0)
+        scaled.fit([block * scale for block in blocks])
+        assert scaled.n_common_components_ == baseline.n_common_components_
+        testing.assert_array_equal(scaled.individual_ranks_, baseline.individual_ranks_)
+
+
 def test_ajive_rejects_initial_ranks_exceeding_numerical_rank():
     rng = np.random.RandomState(0)
     # The first block has an exactly-zero column, so its numerical rank is 4
