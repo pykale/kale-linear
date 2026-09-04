@@ -155,6 +155,24 @@ def test_cife_rejects_invalid_per_block_rank_specs(multiblock_data):
             CIFE(n_individual_components=spec, random_state=0).fit(X, groups=groups)
 
 
+def test_cife_validates_tol_and_epsilon_are_in_half_open_unit_interval(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    for kwargs in ({"tol": 1.0}, {"tol": 1.5}, {"tol": -0.1}, {"epsilon": 1.0}, {"epsilon": 1.5}, {"epsilon": -0.1}):
+        with pytest.raises(ValueError, match="must be a float in the range \\[0.0, 1.0\\)"):
+            CIFE(**kwargs).fit(X, groups=groups)
+
+
+def test_cife_validates_pca_dim_domain():
+    rng = np.random.RandomState(2)
+    full_rank_blocks = [rng.randn(40, 10) for _ in range(3)]
+    for pca_dim in (0.0, 1.0):
+        with pytest.raises(ValueError, match="pca_dim"):
+            CIFE(pca_dim=pca_dim, random_state=0).fit(full_rank_blocks)
+    # Fractions are strictly inside (0, 1); component counts are integers >= 1.
+    for pca_dim in (0.5, 1, 2):
+        CIFE(pca_dim=pca_dim, random_state=0).fit(full_rank_blocks)
+
+
 def test_cife_transform_individual_rejects_wrong_number_of_blocks(multiblock_data):
     X, groups, blocks, _ = multiblock_data
     cife = CIFE(n_common_components=2, n_individual_components=[3, 4, 2], random_state=0)

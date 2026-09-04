@@ -184,14 +184,14 @@ class CIFE(BaseCommonIndividualTransformer):
     max_iter : int, default=200
         Maximum power iterations for each common direction.
     tol : float, default=1e-6
-        Convergence tolerance for the power iterations.
+        Convergence tolerance for the power iterations, in ``[0, 1)``.
     epsilon : float, default=0.01
         Residual threshold used to decide whether a direction is common when
-        ``n_common_components`` is None.
+        ``n_common_components`` is None, in ``[0, 1)``.
     pca_dim : int, float or None, default=None
         Optional truncation of per-block column spaces, either as a relative
-        fraction in (0, 1) or an absolute number of components. Required when
-        a block spans the whole feature space.
+        fraction in ``(0, 1)`` or an absolute integer number of components.
+        Required when a block spans the whole feature space.
     random_state : int, RandomState or None, default=None
         Random seed for initializing the power iterations.
 
@@ -214,11 +214,18 @@ class CIFE(BaseCommonIndividualTransformer):
     _parameter_constraints: dict = {
         **BaseCommonIndividualTransformer._parameter_constraints,
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "epsilon": [Interval(Real, 0, None, closed="left")],
+        # Tolerances above the unit interval invalidate both decisions: with
+        # ``tol >= 1`` the convergence check ``abs(previous @ direction) >
+        # 1 - tol`` passes on the first iteration, and with ``epsilon >= 1``
+        # no residual ever exceeds the threshold so every direction is common.
+        "tol": [Interval(Real, 0, 1, closed="left")],
+        "epsilon": [Interval(Real, 0, 1, closed="left")],
         "pca_dim": [
-            Interval(Real, 0, 1, closed="right"),
-            Interval(Integral, 2, None, closed="left"),
+            # A fraction of exactly 1 would mean keeping the full column space,
+            # which is the case ``pca_dim`` exists to truncate, so keep the
+            # fraction open at both ends and express counts as integers.
+            Interval(Real, 0, 1, closed="neither"),
+            Interval(Integral, 1, None, closed="left"),
             None,
         ],
     }
