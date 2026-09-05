@@ -13,14 +13,25 @@ from sklearn.utils._param_validation import Interval
 from sklearn.utils.validation import check_is_fitted, check_random_state
 
 
+def _is_block_sequence(X):
+    """Return True when an outer Python sequence contains 2D block matrices."""
+    if len(X) == 0:
+        return False
+    try:
+        return np.ndim(X[0]) == 2
+    except (TypeError, ValueError):
+        return False
+
+
 def _check_multiblock_input(X, groups=None, min_blocks=2):
     """Validate a multiblock input and return one matrix per block.
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features) or list of array-like
-        When ``X`` is a single matrix, ``groups`` must give the block id of
-        each row. When ``X`` is a list, each element is one block and all
+    X : array-like of shape (n_samples, n_features) or list/tuple of 2D array-like
+        When ``X`` is a single matrix (including a Python list/tuple of 1D
+        rows), ``groups`` must give the block id of each row. When ``X`` is a
+        list/tuple whose elements are 2D, each element is one block and all
         blocks must share the same feature space (columns).
     groups : array-like of shape (n_samples,), default=None
         Block id for each sample when ``X`` is a single stacked matrix.
@@ -41,26 +52,31 @@ def _check_multiblock_input(X, groups=None, min_blocks=2):
         list of blocks.
     """
     if isinstance(X, (list, tuple)):
-        if groups is not None:
-            raise ValueError("`groups` must be None when `X` is a list of blocks.")
         if len(X) == 0:
             raise ValueError("`X` must contain at least one block.")
-        blocks = []
-        n_features = None
-        for block in X:
-            block = np.asarray(block, dtype=float)
-            if block.ndim != 2:
-                raise ValueError("Each block in `X` must be a 2D array.")
-            if block.shape[0] == 0:
-                raise ValueError("Each block in `X` must contain at least one sample.")
-            if n_features is None:
-                n_features = block.shape[1]
-            elif block.shape[1] != n_features:
-                raise ValueError("All blocks must share the same number of features.")
-            blocks.append(block)
-        if len(blocks) < min_blocks:
-            raise ValueError("At least two blocks are required for common and individual feature extraction.")
-        return blocks, None, np.arange(len(blocks))
+        if _is_block_sequence(X):
+            if groups is not None:
+                raise ValueError("`groups` must be None when `X` is a list of blocks.")
+            blocks = []
+            n_features = None
+            for block in X:
+                block = np.asarray(block, dtype=float)
+                if block.ndim != 2:
+                    raise ValueError("Each block in `X` must be a 2D array.")
+                if block.shape[0] == 0:
+                    raise ValueError("Each block in `X` must contain at least one sample.")
+                if n_features is None:
+                    n_features = block.shape[1]
+                elif block.shape[1] != n_features:
+                    raise ValueError("All blocks must share the same number of features.")
+                blocks.append(block)
+            if len(blocks) < min_blocks:
+                raise ValueError("At least two blocks are required for common and individual feature extraction.")
+            return blocks, None, np.arange(len(blocks))
+        try:
+            X = np.asarray(X, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("`X` must be a 2D array or a list of 2D block arrays.") from exc
 
     X = np.asarray(X, dtype=float)
     if X.ndim != 2:
@@ -151,7 +167,7 @@ class BaseCommonIndividualTransformer(ClassNamePrefixFeaturesOutMixin, Transform
         self.n_individual_components = n_individual_components
         self.random_state = random_state
 
-    def fit(self, X, y=None, groups=None, **fit_params):
+    def fit(self, X, y=None, groups=None):
         """Fit the transformer on multiblock data.
 
         Parameters
@@ -203,8 +219,16 @@ class BaseCommonIndividualTransformer(ClassNamePrefixFeaturesOutMixin, Transform
         """
         check_is_fitted(self, "common_components_")
         if isinstance(X, (list, tuple)):
-            blocks, _, _ = _check_multiblock_input(X, min_blocks=1)
-            X_stacked = np.vstack(blocks)
+            if _is_block_sequence(X):
+                blocks, _, _ = _check_multiblock_input(X, min_blocks=1)
+                X_stacked = np.vstack(blocks)
+            else:
+                try:
+                    X_stacked = np.asarray(X, dtype=float)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("`X` must be a 2D array or a list of 2D block arrays.") from exc
+                if X_stacked.ndim != 2:
+                    raise ValueError("`X` must be a 2D array or a list of 2D block arrays.")
         else:
             X_stacked = np.asarray(X, dtype=float)
             if X_stacked.ndim != 2:

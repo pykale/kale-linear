@@ -17,6 +17,22 @@ def test_check_multiblock_input_rejects_groups_with_list():
         _check_multiblock_input([np.ones((5, 3)), np.ones((5, 3))], groups=np.zeros(10))
 
 
+def test_check_multiblock_input_accepts_nested_list_with_groups():
+    X = np.arange(20, dtype=float).reshape(10, 2)
+    groups = np.repeat([0, 1], 5)
+    expected_blocks, expected_groups, expected_ids = _check_multiblock_input(X, groups)
+    blocks, out_groups, block_ids = _check_multiblock_input(X.tolist(), groups)
+    for actual, expected in zip(blocks, expected_blocks):
+        testing.assert_allclose(actual, expected)
+    testing.assert_array_equal(out_groups, expected_groups)
+    testing.assert_array_equal(block_ids, expected_ids)
+
+
+def test_check_multiblock_input_treats_nested_list_without_groups_as_stacked():
+    with pytest.raises(ValueError, match="`groups` must be provided"):
+        _check_multiblock_input([[1.0, 2.0], [3.0, 4.0]])
+
+
 def test_check_multiblock_input_rejects_empty_list():
     with pytest.raises(ValueError, match="at least one block"):
         _check_multiblock_input([])

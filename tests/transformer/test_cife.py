@@ -57,6 +57,24 @@ def test_cife_list_input_matches_stacked(multiblock_data):
     testing.assert_allclose(from_stacked.common_components_, from_list.common_components_)
 
 
+def test_cife_accepts_stacked_python_list(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    cife = CIFE(n_common_components=2, n_individual_components=[3, 4, 2], random_state=0)
+    cife.fit(X.tolist(), groups=groups)
+
+    testing.assert_allclose(cife.transform(X.tolist()), X @ cife.common_components_)
+    expected_individual = cife.transform_individual(X, groups=groups)
+    actual_individual = cife.transform_individual(X.tolist(), groups=groups)
+    for expected, actual in zip(expected_individual, actual_individual):
+        testing.assert_allclose(expected, actual)
+
+
+def test_cife_fit_rejects_unexpected_keyword(multiblock_data):
+    X, groups, _, _ = multiblock_data
+    with pytest.raises(TypeError, match="unexpected keyword argument 'group'"):
+        CIFE(random_state=0).fit(X, group=groups)
+
+
 def test_cife_transform_consistency(multiblock_data):
     X, groups, blocks, _ = multiblock_data
     cife = CIFE(n_common_components=2, n_individual_components=[3, 4, 2], random_state=0)
