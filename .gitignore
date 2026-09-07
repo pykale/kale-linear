@@ -22,6 +22,7 @@ dist/
 
 # Documentation build artefacts
 docs/build/
+docs/source/legacy/
 docs/source/generated/
 
 # Pycharm

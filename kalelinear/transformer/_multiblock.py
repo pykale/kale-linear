@@ -127,6 +127,10 @@ def _check_per_block_ranks(n_components, n_blocks, name):
         raise ValueError(f"{name} must be an integer or a sequence with one value per block.")
     if not np.issubdtype(ranks.dtype, np.number):
         raise ValueError(f"{name} must contain numeric values.")
+    if np.issubdtype(ranks.dtype, np.complexfloating):
+        # Ordering and flooring are undefined for complex values, which would
+        # otherwise surface as a raw TypeError below.
+        raise ValueError(f"{name} must contain real numeric values.")
     if np.any(np.isnan(ranks)):
         raise ValueError(f"{name} must not contain NaN values.")
     if np.any(np.isinf(ranks)):

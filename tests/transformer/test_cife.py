@@ -167,6 +167,7 @@ def test_cife_rejects_invalid_per_block_rank_specs(multiblock_data):
         ([np.nan, 3, 2], "NaN"),
         ([1.5, 3, 2], "integer"),
         ([-1, 3, 2], "non-negative"),
+        ([1 + 1j, 3, 2], "real numeric"),
     ]
     for spec, message in invalid_specs:
         with pytest.raises(ValueError, match=message):

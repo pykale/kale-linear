@@ -125,6 +125,11 @@ def test_check_per_block_ranks_rejects_non_numeric():
         _check_per_block_ranks(["a", "b"], 2, "ranks")
 
 
+def test_check_per_block_ranks_rejects_complex():
+    with pytest.raises(ValueError, match="real numeric"):
+        _check_per_block_ranks([1 + 1j, 2], 2, "ranks")
+
+
 def test_check_per_block_ranks_rejects_nan():
     with pytest.raises(ValueError, match="NaN"):
         _check_per_block_ranks([1.0, np.nan], 2, "ranks")

@@ -4,7 +4,7 @@ from numpy import testing
 from sklearn.base import clone
 
 from kalelinear.transformer import AJIVE
-from kalelinear.transformer._ajive import _jive_rand_null_norm
+from kalelinear.transformer._ajive import _jive_rand_null_norm, _select_joint_threshold
 from tests.utils.test_utils import make_common_individual_dataset
 
 
@@ -50,9 +50,20 @@ def test_ajive_percentile_uses_larger_perturbation_bound(multiblock_data):
         AJIVE(percentile=percentile, n_resamples=50, random_state=0).fit(X, groups=groups).n_common_components_
         for percentile in (5, 50, 95)
     ]
-    # A larger percentile gives a non-decreasing Wedin threshold, so the joint
-    # rank selected from max(wedin, random-direction) bound cannot increase.
+    # In the Wedin branch a larger percentile gives a non-decreasing threshold,
+    # while in the random-direction branch the threshold is percentile
+    # independent, so the joint rank cannot increase with the percentile.
     assert ranks[0] >= ranks[1] >= ranks[2]
+
+
+def test_ajive_joint_threshold_follows_reference_conditional():
+    # When the random-direction bound dominates the fixed 5th percentile of the
+    # Wedin bounds, it is used alone and larger percentiles are ignored.
+    wedin = np.array([3.0, 3.0, 3.0, 10.0, 12.0])
+    assert _select_joint_threshold(wedin, percentile=95, random_ssv_bound=4.0) == 4.0
+    # Otherwise the Wedin bound at the requested percentile applies.
+    assert _select_joint_threshold(wedin, percentile=5, random_ssv_bound=2.0) == 3.0
+    assert _select_joint_threshold(wedin, percentile=95, random_ssv_bound=2.0) == 11.6
 
 
 def test_ajive_manual_joint_rank(multiblock_data):
@@ -244,6 +255,7 @@ def test_ajive_rejects_invalid_per_block_rank_specs(multiblock_data):
         ([np.inf, 2, 2], "infinite"),
         ([1.5, 2, 2], "integer"),
         ([-1, 2, 2], "non-negative"),
+        ([1 + 1j, 2, 2], "real numeric"),
     ]
     for spec, message in invalid_specs:
         with pytest.raises(ValueError, match=message):

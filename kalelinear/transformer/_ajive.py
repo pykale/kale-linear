@@ -91,6 +91,18 @@ def _random_direction_ssv(n, ranks, n_sim, random_state):
     return values
 
 
+def _select_joint_threshold(wedin_ssv_bounds, percentile, random_ssv_bound):
+    """Joint-rank threshold following the reference AJIVEJointSelectMJ logic.
+
+    The random-direction bound is compared with the fixed 5th percentile of
+    the Wedin bounds and, when it is larger, used alone. Otherwise the Wedin
+    bound at the requested ``percentile`` applies.
+    """
+    if random_ssv_bound > np.percentile(wedin_ssv_bounds, 5):
+        return random_ssv_bound
+    return np.percentile(wedin_ssv_bounds, percentile)
+
+
 class AJIVE(BaseCommonIndividualTransformer):
     """Angle-based Joint and Individual Variation Explained (AJIVE).
 
@@ -122,6 +134,9 @@ class AJIVE(BaseCommonIndividualTransformer):
         Number of re-samples for the Wedin perturbation bound.
     percentile : float, default=5
         Percentile of the Wedin bounds used for the joint rank selection.
+        Applied only when the Wedin bound dominates the random-direction
+        bound; otherwise the random-direction bound alone sets the threshold
+        (as in the reference implementation).
     random_state : int, RandomState or None, default=None
         Random seed for the perturbation-bound re-sampling.
 
@@ -239,12 +254,9 @@ class AJIVE(BaseCommonIndividualTransformer):
         s_stacked = s_stacked[:max_joint_rank]
         Vt_stacked = Vt_stacked[:max_joint_rank]
         wedin_ssv_bounds = np.maximum(np.sum(np.cos(np.deg2rad(angle_bounds)) ** 2, axis=0), 1.0)
-        wedin_ssv_bound = np.percentile(wedin_ssv_bounds, self.percentile)
         random_ssvs = _random_direction_ssv(D, ranks, 100, self.random_state_)
         random_ssv_bound = np.percentile(random_ssvs, 95)
-        # Take the more conservative (larger) of the two perturbation bounds,
-        # following the reference implementation: max(wedin, random).
-        joint_threshold = max(wedin_ssv_bound, random_ssv_bound)
+        joint_threshold = _select_joint_threshold(wedin_ssv_bounds, self.percentile, random_ssv_bound)
         joint_rank = int(np.sum(s_stacked**2 + _FERROR > joint_threshold))
         if self.n_common_components is not None:
             joint_rank = min(int(self.n_common_components), len(s_stacked))
