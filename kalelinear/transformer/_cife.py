@@ -24,24 +24,32 @@ from kalelinear.transformer._multiblock import _check_per_block_ranks, BaseCommo
 
 
 def _column_space_basis(Y, pca_dim=None):
-    """Return an orthonormal basis of the column space of ``Y`` (D x J)."""
+    """Return an orthonormal basis of the (truncated) column space of ``Y`` (D x J)."""
     D, J = Y.shape
     U, s, _ = np.linalg.svd(Y, full_matrices=False)
     if s.size == 0 or s[0] == 0:
         raise ValueError("Each block must have a non-zero column space.")
     rank = int(np.sum(s > s[0] * max(D, J) * np.finfo(s.dtype).eps))
-    if rank >= D:
-        if pca_dim is None:
-            raise ValueError(
-                "A block spans the whole feature space, so common and individual "
-                "subspaces cannot be separated. Reduce the dimensionality first "
-                "or set `pca_dim` to truncate the per-block column spaces."
-            )
+    if rank >= D and pca_dim is None:
+        raise ValueError(
+            "A block spans the whole feature space, so common and individual "
+            "subspaces cannot be separated. Reduce the dimensionality first "
+            "or set `pca_dim` to truncate the per-block column spaces."
+        )
+    if pca_dim is not None:
+        # ``pca_dim`` caps the column-space basis of every block, not only
+        # full-rank ones: fractions are relative to the feature dimension and
+        # counts are absolute component numbers.
         if 0 < pca_dim < 1:
-            rank = min(int(np.floor(D * pca_dim)), D - 1)
+            cap = int(np.floor(D * pca_dim))
         else:
-            rank = min(int(pca_dim), D - 1)
-        rank = max(rank, 1)
+            cap = int(pca_dim)
+        cap = max(cap, 1)
+        if rank >= D:
+            # Full-rank blocks must be truncated below D for the common and
+            # individual separation to be identifiable.
+            cap = min(cap, D - 1)
+        rank = min(rank, cap)
     return U[:, :rank], rank
 
 
@@ -62,8 +70,8 @@ def _cobe_common_basis(blocks, c, max_iter, tol, epsilon, pca_dim, random_state)
     epsilon : float
         Residual threshold below which a direction counts as common.
     pca_dim : int, float or None
-        Optional per-block dimensionality truncation for blocks spanning the
-        whole feature space.
+        Optional per-block dimensionality truncation of the column-space
+        bases.
     random_state : RandomState
         Random number generator for initializing the power iterations.
 

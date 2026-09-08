@@ -4,6 +4,7 @@ from numpy import testing
 from sklearn.base import clone
 
 from kalelinear.transformer import CIFE
+from kalelinear.transformer._cife import _column_space_basis
 from tests.utils.test_utils import make_common_individual_dataset
 
 
@@ -143,6 +144,23 @@ def test_cife_full_rank_block_requires_pca_dim():
     cife = CIFE(pca_dim=0.5, random_state=0)
     cife.fit(blocks)
     assert cife.n_common_components_ == 0
+
+
+def test_cife_pca_dim_truncates_rank_deficient_blocks():
+    rng = np.random.RandomState(0)
+    # Each block has 30 features but only 20 numerical dimensions.
+    low_rank = rng.randn(30, 20) @ rng.randn(20, 60)
+    blocks = [low_rank.T for _ in range(3)]
+    cife = CIFE(n_common_components=8, pca_dim=5, random_state=0)
+    cife.fit(blocks)
+    assert cife.n_common_components_ <= 5
+
+
+def test_column_space_basis_applies_pca_dim_to_rank_deficient_block():
+    rng = np.random.RandomState(0)
+    Y = rng.randn(30, 20) @ rng.randn(20, 60)
+    assert _column_space_basis(Y, None)[1] == 20
+    assert _column_space_basis(Y, 5)[1] == 5
 
 
 def test_cife_zero_common_components_skips_full_rank_validation():
