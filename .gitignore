@@ -13,6 +13,7 @@ venv/
 *.zip
 *.ckpt
 *.json
+!.github/changelog-ci-config.json
 
 # Distribution / packaging
 build/
@@ -21,6 +22,7 @@ dist/
 
 # Documentation build artefacts
 docs/build/
+docs/source/legacy/
 docs/source/generated/
 
 # Pycharm

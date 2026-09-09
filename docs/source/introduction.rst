@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Kale-Linear is a Python library for non-deep, knowledge-aware machine learning
+KaleLinear is a Python library for non-deep, knowledge-aware machine learning
 from multiple sources, domains, or views. It provides NumPy-based
 implementations of transfer learning, domain adaptation, manifold
 regularization, and group-aware linear learning methods with a scikit-learn
@@ -14,8 +14,8 @@ covariates, side information, or unlabeled target samples.
 Main Features
 -------------
 
-* Transformer models for learning feature embeddings: MPCA, TCA, JDA, BDA, and
-  MIDA.
+* Transformer models for learning feature embeddings: MPCA, TCA, JDA, BDA,
+  MIDA, CIFE, and AJIVE.
 * Estimator models for classification and adaptation: LapSVM, LapRLS, ARSVM,
   ARRLS, CoIRSVM, CoIRLS, and GSDA.
 * NumPy-compatible inputs and outputs.

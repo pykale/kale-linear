@@ -106,6 +106,17 @@ def _eigendecompose(
     """Compute eigenpairs for a kernel matrix or a generalized eigenproblem."""
     a, b = _get_eigenproblem_matrices(eigenproblem)
 
+    # Generalized eigenproblems require a positive-definite ``b``. Constraint
+    # matrices such as centered kernel matrices are only positive-semidefinite
+    # up to floating-point rounding, which makes scipy's ``eigh(a, b)`` fail
+    # with a non-positive-definite error. Regularize ``b`` with a small ridge
+    # relative to its scale; the shift is negligible for the retained
+    # components.
+    if b is not None:
+        b = 0.5 * (b + b.T)
+        ridge = 10 * np.finfo(b.dtype).eps * max(1.0, np.max(np.abs(b))) * b.shape[0]
+        b = b + ridge * np.eye(b.shape[0], dtype=b.dtype)
+
     n_components = _check_n_components((a, b), n_components)
     solver = _check_solver((a, b), n_components, solver, eigenvalue_order)
 
@@ -307,15 +318,15 @@ class BaseKernelDomainTransformer(ClassNamePrefixFeaturesOutMixin, TransformerMi
         self.fit_inverse_transform = fit_inverse_transform
         self.augment = augment
 
-    def _fit_inverse_transform(self, x_transformed, X):
+    def _fit_inverse_transform(self, X_transformed, X):
         if hasattr(X, "tocsr"):
             raise NotImplementedError("Inverse transform not implemented for sparse matrices!")
 
-        n_samples = x_transformed.shape[0]
-        x_transformed_kernel_matrix = self._get_kernel(x_transformed)
+        n_samples = X_transformed.shape[0]
+        x_transformed_kernel_matrix = self._get_kernel(X_transformed)
         x_transformed_kernel_matrix.flat[:: n_samples + 1] += self.alpha
         self.dual_coef_ = la.solve(x_transformed_kernel_matrix, X, assume_a="pos", overwrite_a=True)
-        self.x_transformed_fit_ = x_transformed
+        self.X_transformed_fit_ = X_transformed
 
     @property
     def _n_features_out(self):
@@ -350,7 +361,7 @@ class BaseKernelDomainTransformer(ClassNamePrefixFeaturesOutMixin, TransformerMi
         w = self.eigenvectors_
         if self.scale_components:
             w = _scale_eigenvectors(self.eigenvalues_, w)
-        return safe_sparse_dot(w.T, self.x_fit_)
+        return safe_sparse_dot(w.T, self.X_fit_)
 
     def _requires_covariates(self):
         return False
@@ -546,8 +557,8 @@ class BaseKernelDomainTransformer(ClassNamePrefixFeaturesOutMixin, TransformerMi
         elif hasattr(self, "_factor_validator"):
             delattr(self, "_factor_validator")
 
-        self.x_fit_ = self._augment_data(context.X_fit, context.covariates_fit)
-        self.x_fit_raw_ = context.X_fit
+        self.X_fit_ = self._augment_data(context.X_fit, context.covariates_fit)
+        self.X_fit_raw_ = context.X_fit
         self.covariates_input_ = raw_covariates
         self.covariates_fit_ = context.covariates_fit
         self.fit_context_ = context
@@ -556,15 +567,15 @@ class BaseKernelDomainTransformer(ClassNamePrefixFeaturesOutMixin, TransformerMi
         self.gamma_ = 1 / _num_features(X) if self.gamma is None else self.gamma
         self._centerer = KernelCenterer()
 
-        x_fit_kernel_matrix = self._get_kernel(self.x_fit_)
-        x_fit_kernel_matrix = self._centerer.fit_transform(x_fit_kernel_matrix)
+        X_fit_kernel_matrix = self._get_kernel(self.X_fit_)
+        X_fit_kernel_matrix = self._centerer.fit_transform(X_fit_kernel_matrix)
 
-        eigenproblem = self._make_eigenproblem(x_fit_kernel_matrix, context)
+        eigenproblem = self._make_eigenproblem(X_fit_kernel_matrix, context)
         self._fit_transform_in_place(eigenproblem)
 
         if self.fit_inverse_transform:
-            x_transformed = self.transform(context.X_input, covariates=context.covariates_input)
-            self._fit_inverse_transform(x_transformed, context.X_input)
+            X_transformed = self.transform(context.X_input, covariates=context.covariates_input)
+            self._fit_inverse_transform(X_transformed, context.X_input)
 
         return self
 
@@ -593,21 +604,21 @@ class BaseKernelDomainTransformer(ClassNamePrefixFeaturesOutMixin, TransformerMi
             covariates = self._factor_validator.transform(covariates)
 
         X_query = self._augment_data(X, covariates)
-        x_fit_kernel_matrix = self._get_kernel(X_query, self.x_fit_)
-        x_fit_kernel_matrix = self._centerer.transform(x_fit_kernel_matrix)
+        X_fit_kernel_matrix = self._get_kernel(X_query, self.X_fit_)
+        X_fit_kernel_matrix = self._centerer.transform(X_fit_kernel_matrix)
 
         w = self.eigenvectors_
         if self.scale_components:
             w = _scale_eigenvectors(self.eigenvalues_, w)
 
-        z = safe_sparse_dot(x_fit_kernel_matrix, w)
+        z = safe_sparse_dot(X_fit_kernel_matrix, w)
 
         if self.augment == "post":
             z = np.hstack((z, covariates))
 
         return z
 
-    def inverse_transform(self, z):
+    def inverse_transform(self, X):
         check_is_fitted(self)
         if not self.fit_inverse_transform:
             raise NotFittedError(
@@ -616,7 +627,7 @@ class BaseKernelDomainTransformer(ClassNamePrefixFeaturesOutMixin, TransformerMi
                 "the inverse transform is not available."
             )
 
-        k_z = self._get_kernel(z, self.x_transformed_fit_)
+        k_z = self._get_kernel(X, self.X_transformed_fit_)
         return safe_sparse_dot(k_z, self.dual_coef_)
 
     def fit_transform(self, X, y=None, covariates=None, **fit_params):

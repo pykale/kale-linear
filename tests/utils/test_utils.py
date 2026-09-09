@@ -29,7 +29,7 @@ def test_base_init_returns_expected_shapes(sample_data):
 
 @pytest.mark.parametrize("mode", ["distance", "connectivity"])
 def test_lap_norm_returns_square_matrix(sample_data, mode):
-    lap = lap_norm(sample_data, n_neighbour=2, mode=mode, normalise=False)
+    lap = lap_norm(sample_data, n_neighbors=2, mode=mode, normalize=False)
 
     assert lap.shape == (4, 4)
     assert np.allclose(lap, lap.T)
@@ -80,7 +80,7 @@ def make_domain_shifted_dataset(
     w = random_state.randn(num_features)
     w = w / np.linalg.norm(w)
 
-    x_all = []
+    X_all = []
     y_all = []
     domain_all = []
 
@@ -90,21 +90,83 @@ def make_domain_shifted_dataset(
         for label in [0, 1]:
             class_mean = (label - 0.5) * class_sep * w + domain_shift
             cov = np.eye(num_features)
-            x_class = random_state.multivariate_normal(class_mean, cov, num_samples_per_class)
+            X_class = random_state.multivariate_normal(class_mean, cov, num_samples_per_class)
             y_class = np.full(num_samples_per_class, label)
             domain_class = np.full(num_samples_per_class, i_domain)
 
-            x_all.append(x_class)
+            X_all.append(X_class)
             y_all.append(y_class)
             domain_all.append(domain_class)
 
-    x = np.vstack(x_all)
+    X = np.vstack(X_all)
     y = np.concatenate(y_all)
     domains = np.concatenate(domain_all)
 
-    idx = random_state.permutation(len(x))
-    x = x[idx]
+    idx = random_state.permutation(len(X))
+    X = X[idx]
     y = y[idx]
     domains = domains[idx]
 
-    return x, y, domains
+    return X, y, domains
+
+
+def make_common_individual_dataset(
+    n_blocks=3,
+    n_features=30,
+    n_common=2,
+    individual_ranks=(3, 4, 2),
+    n_samples=(60, 50, 70),
+    noise=0.0,
+    random_state=None,
+):
+    """Create multiblock data with planted common and individual subspaces.
+
+    Each block is generated as ``B_c A_c^T + B_i A_i^T (+ noise)`` where
+    ``A_c`` is a common feature-space basis shared by all blocks and ``A_i``
+    is a block-specific basis orthogonal to ``A_c``.
+    """
+    individual_ranks = np.asarray(individual_ranks)
+    n_samples = np.asarray(n_samples)
+    if individual_ranks.ndim != 1 or individual_ranks.shape[0] != n_blocks:
+        raise ValueError(
+            f"`individual_ranks` must be a sequence with one rank per block: "
+            f"expected {n_blocks} values, got {individual_ranks.size}."
+        )
+    if n_samples.ndim != 1 or n_samples.shape[0] != n_blocks:
+        raise ValueError(
+            f"`n_samples` must be a sequence with one sample count per block: "
+            f"expected {n_blocks} values, got {n_samples.size}."
+        )
+    random_state = check_random_state(random_state)
+    common_basis, _ = np.linalg.qr(random_state.randn(n_features, n_common))
+    blocks = []
+    group_lists = []
+    for k in range(n_blocks):
+        individual_basis, _ = np.linalg.qr(random_state.randn(n_features, individual_ranks[k]))
+        individual_basis -= common_basis @ (common_basis.T @ individual_basis)
+        individual_basis, _ = np.linalg.qr(individual_basis)
+        block = random_state.randn(n_samples[k], n_common) @ common_basis.T
+        block += random_state.randn(n_samples[k], individual_ranks[k]) @ individual_basis.T
+        if noise:
+            block += noise * random_state.randn(n_samples[k], n_features)
+        blocks.append(block)
+        group_lists.append(np.full(n_samples[k], k))
+    X = np.vstack(blocks)
+    groups = np.concatenate(group_lists)
+    return X, groups, blocks, common_basis
+
+
+def test_make_common_individual_dataset_validates_block_parameters():
+    with pytest.raises(ValueError, match="individual_ranks"):
+        make_common_individual_dataset(n_blocks=4)
+    with pytest.raises(ValueError, match="n_samples"):
+        make_common_individual_dataset(n_blocks=4, individual_ranks=(1, 2, 3, 4))
+
+
+def test_make_common_individual_dataset_accepts_custom_n_blocks():
+    X, groups, blocks, _ = make_common_individual_dataset(
+        n_blocks=2, individual_ranks=(1, 2), n_samples=(20, 30), random_state=0
+    )
+    assert len(blocks) == 2
+    assert [block.shape[0] for block in blocks] == [20, 30]
+    assert groups.shape == (50,)

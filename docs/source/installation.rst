@@ -13,7 +13,7 @@ Install a local checkout for development:
 
    pip install -e ".[dev]"
 
-Kale-Linear requires Python 3.10 or later. Core dependencies include NumPy,
+KaleLinear requires Python 3.10 or later. Core dependencies include NumPy,
 SciPy, scikit-learn, pandas, tensorly, cvxopt, and osqp.
 
 To build the documentation locally, install the documentation requirements and

@@ -73,7 +73,7 @@ class TCA(BaseMMDDomainTransformer):
             return obj, st
 
         y_kernel_matrix = self.gamma_ * np.dot(context.y_encoded, context.y_encoded.T) + (1 - self.gamma_) * identity
-        lap_mat = lap_norm(context.X_fit, n_neighbour=self.k, mode="connectivity")
+        lap_mat = lap_norm(context.X_fit, n_neighbors=self.k, mode="connectivity")
         obj += multi_dot([x_kernel_matrix, (mmd_matrix + self.mu * lap_mat), x_kernel_matrix])
         st += multi_dot([x_kernel_matrix, h, y_kernel_matrix, h, x_kernel_matrix])
 

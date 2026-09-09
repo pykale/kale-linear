@@ -307,7 +307,7 @@ class GSDA(BaseKaleEstimator):
                     z += delta_theta[i] * (alphas[len(alphas) - 1 - i] - beta_i)
             else:
                 z = np.eye(self.theta_.shape[0]) @ q
-            # Line search and update x
+            # Line search and update X
             # Implement a line search algorithm to find an appropriate step size
             # step_size = 1  # Placeholder
             # Update memory
@@ -379,20 +379,20 @@ class GSDA(BaseKaleEstimator):
         return self
 
     def compute_gsda_gradient(self, X, y, groups, target_idx=None):
-        n_sample = X.shape[0]
+        n_samples = X.shape[0]
         n_tgt = y.shape[0]
         if target_idx is None:
-            x_tgt = X[:n_tgt]
+            X_tgt = X[:n_tgt]
         else:
-            x_tgt = X[target_idx]
+            X_tgt = X[target_idx]
 
-        y_hat = expit(x_tgt @ self.theta_)
+        y_hat = expit(X_tgt @ self.theta_)
         # n_feature = X.shape[1]
         _simple_hsic = simple_hsic_grad_term(self.theta_, X, groups)
-        hsic_proba = expit(np.dot(self.theta_, _simple_hsic) / np.square(n_sample - 1))
-        grad_hsic = (hsic_proba - 1) * _simple_hsic / np.square(n_sample - 1)
+        hsic_proba = expit(np.dot(self.theta_, _simple_hsic) / np.square(n_samples - 1))
+        grad_hsic = (hsic_proba - 1) * _simple_hsic / np.square(n_samples - 1)
 
-        delta_grad = (x_tgt.T @ (y_hat - y)) / n_tgt
+        delta_grad = (X_tgt.T @ (y_hat - y)) / n_tgt
         if self.regularization is not None:
             delta_grad += self.theta_ * self.alpha
         delta_grad += self.lambda_ * grad_hsic

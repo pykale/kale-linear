@@ -8,14 +8,14 @@ from sklearn.neighbors import kneighbors_graph
 from kalelinear.utils._backend import to_numpy
 
 
-def lap_norm(X, n_neighbour=3, metric="cosine", mode="distance", normalise=True):
+def lap_norm(X, n_neighbors=3, metric="cosine", mode="distance", normalize=True):
     """[summary]
 
     Parameters
     ----------
     X : [type]
         [description]
-    n_neighbour : int, optional
+    n_neighbors : int, optional
         [description], by default 3
     metric : str, optional
         [description], by default 'cosine'
@@ -24,7 +24,7 @@ def lap_norm(X, n_neighbour=3, metric="cosine", mode="distance", normalise=True)
         returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the
         distances between neighbors according to the given metric.
-    normalise : bool, optional
+    normalize : bool, optional
         [description], by default True
 
     Returns
@@ -34,7 +34,7 @@ def lap_norm(X, n_neighbour=3, metric="cosine", mode="distance", normalise=True)
     """
     x_np = to_numpy(X)
     n = x_np.shape[0]
-    knn_graph = kneighbors_graph(x_np, n_neighbour, metric=metric, mode=mode).toarray()
+    knn_graph = kneighbors_graph(x_np, n_neighbors, metric=metric, mode=mode).toarray()
     W = np.zeros((n, n))
     knn_idx = np.logical_or(knn_graph, knn_graph.T)
     if mode == "distance":
@@ -44,7 +44,7 @@ def lap_norm(X, n_neighbour=3, metric="cosine", mode="distance", normalise=True)
         W[knn_idx] = 1
 
     D = np.diag(np.sum(W, axis=1))
-    if normalise:
+    if normalize:
         D_ = inv(sqrtm(D))
         lap_mat = np.eye(n) - multi_dot([D_, W, D_])
     else:

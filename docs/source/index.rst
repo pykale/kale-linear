@@ -1,4 +1,4 @@
-Kale-Linear Documentation
+KaleLinear Documentation
 =========================
 
 Getting Started
@@ -11,7 +11,7 @@ Getting Started
    installation
    tutorial
 
-Kale-Linear API
+KaleLinear API
 ---------------
 
 .. toctree::
@@ -19,11 +19,11 @@ Kale-Linear API
 
    api_transformers
    api_estimators
-   api_utilities
 
-Kale-Linear APIs above are ordered following the machine learning pipeline,
-i.e., feature embedding transformers, predictive estimators, and reusable
-utilities, rather than alphabetically.
+The API pages above are ordered following the machine learning pipeline,
+i.e., feature embedding transformers and predictive estimators, rather than
+alphabetically. `kalelinear.embed` and `kalelinear.predict` are PyKale-compatible
+aliases of `kalelinear.transformer` and `kalelinear.estimator`, respectively.
 
 Project
 -------
@@ -31,7 +31,8 @@ Project
 .. toctree::
    :maxdepth: 1
 
-   GitHub repository <https://github.com/pykale/kale-linear>
+   Read the Docs (PyKale subproject) <https://pykale.readthedocs.io/projects/linear/>
+   GitHub repository <https://github.com/pykale/linear>
 
 Indices and Tables
 ------------------

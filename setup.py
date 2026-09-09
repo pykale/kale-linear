@@ -11,15 +11,7 @@ from setuptools import find_packages, setup
 
 
 # Core dependencies frequently used in the kalelinear API
-install_requires = [
-    "cvxopt",
-    "numpy",
-    "osqp",
-    "pandas",
-    "scikit-learn>=1.6.0",
-    "scipy",
-    "tensorly",
-]
+install_requires = ["cvxopt", "numpy", "osqp", "pandas", "scikit-learn>=1.6.0", "scipy", "tensorly"]
 
 # Dependencies for all examples and tutorials
 example_requires = [
@@ -71,14 +63,16 @@ def read(*names, **kwargs):
 
 setup(
     name="kalelinear",
-    version="0.1.0a1",
+    version="0.1.0b1",
     description="Non-deep knowledge-aware machine learning from multiple sources/views in Python",
-    url="https://github.com/pykale/kale-linear",
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
+    url="https://github.com/pykale/linear",
     author="The PyKale team",
     author_email="pykale-group@sheffield.ac.uk",
     project_urls={
-        "Bug Tracker": "https://github.com/pykale/kale-linear/issues",
-        "Source": "https://github.com/pykale/kale-linear",
+        "Bug Tracker": "https://github.com/pykale/linear/issues",
+        "Source": "https://github.com/pykale/linear",
     },
     license="MIT License",
     packages=find_packages(exclude=("tests*", "examples*", "docs*")),
@@ -89,7 +83,7 @@ setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",

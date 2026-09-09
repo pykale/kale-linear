@@ -1,46 +1,55 @@
-# Kale-Linear
+<p align="center">
+<img src="https://github.com/pykale/linear/raw/main/docs/images/kalelinear.jpg" width="60%" alt="kalelinear logo" />
+</p>
 
-Kale-Linear is a Python library for non-deep, knowledge-aware machine learning
-from multiple sources, domains, or views. It provides NumPy-based methods for
-leveraging related data distributions and structural assumptions, including
-transfer learning, domain adaptation, manifold regularization, and group-aware
-learning, through a scikit-learn style API.
+[![tests](https://github.com/pykale/linear/workflows/test/badge.svg)](https://github.com/pykale/linear/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/pykale/linear/branch/main/graph/badge.svg)](https://codecov.io/gh/pykale/linear)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/pykale/linear/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org)
+[![PyPI version](https://img.shields.io/pypi/v/kalelinear?color=blue)](https://pypi.org/project/kalelinear/)
+[![PyPI downloads](https://pepy.tech/badge/kalelinear)](https://pepy.tech/project/kalelinear)
 
-The package is part of the PyKale ecosystem and focuses on classical linear and
-kernel methods that are useful when data are structured by domain labels,
-covariates, side information, or unlabeled target samples.
+KaleLinear is a Python library for non-deep machine learning that learns transferable, shared, or group-specific models from data across multiple sources, groups, blocks, or views. It provides NumPy-based methods in linear or reproducing kernel Hilbert spaces (RKHS), including transfer learning, domain adaptation, manifold regularization, and group-aware learning, through a [`scikit-learn`](https://github.com/scikit-learn/scikit-learn) style API.
 
-## Features
+The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem and focuses on linear and kernel methods for data characterized by covariates (e.g., domain labels, group labels, side information), unlabeled target samples, or tensor structures.
 
-- Transformer models for learning feature embeddings:
-  - Multilinear Principal Component Analysis (MPCA): Lu et al., 2008
-    [[IEEE](https://ieeexplore.ieee.org/abstract/document/4359192)]
-  - Transfer Component Analysis (TCA): Pan et al., 2009
-    [[paper](http://www.aaai.org/ocs/index.php/IJCAI/IJCAI-09/paper/download/294/962)]
-  - Joint Distribution Adaptation (JDA): Long et al., 2013
-    [[paper](http://openaccess.thecvf.com/content_iccv_2013/papers/Long_Transfer_Feature_Learning_2013_ICCV_paper.pdf)]
-  - Balanced Distribution Adaptation (BDA): Wang et al., 2017
-    [[paper](http://jd92.wang/assets/files/a08_icdm17.pdf)]
-  - Maximum Independence Domain Adaptation (MIDA): Yan et al., 2017
-    [[paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7815350)]
-- Estimator models for classification and adaptation:
-  - Manifold Regularization Learning Framework (LapSVM, LapRLS): Belkin et al.,
-    2006 [[paper](http://www.jmlr.org/papers/v7/belkin06a.html)]
-  - Adaptation Regularization Learning Framework (ARSVM, ARRLS): Long et al.,
-    2014 [[paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6550016)]
-  - Covariate Independence Regularized Learning Framework (CoIRSVM, CoIRLS):
-    Zhou et al., 2020
-    [[paper](https://aaai.org/ojs/index.php/AAAI/article/view/6179)],
-    Zhou, 2022 [[thesis](https://etheses.whiterose.ac.uk/id/eprint/31044/)]
-  - Group-specific Discriminant Analysis (GSDA): Zhou et al., 2025
-    [[paper](https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giaf082/8244707)],
-    Zhou, 2022 [[thesis](https://etheses.whiterose.ac.uk/id/eprint/31044/)]
-- NumPy-compatible inputs and outputs.
-- scikit-learn style `fit`, `transform`, `predict`, `fit_transform`, and
-  `fit_predict` workflows where applicable.
-- Optional covariate encoding for categorical domain or group labels.
+## Key features
 
-## Installation
+- Feature transformation models for data embedding via `kalelinear.transformer` (PyKale-style alias: `kalelinear.embed`):
+  - Dimension reduction for multiview tensor data:
+    - Multilinear Principal Component Analysis (`MPCA`) [[1](#references)]
+  - Transferable / generalizable feature extraction across domains or groups:
+    - Transfer Component Analysis (`TCA`) [[2](#references)]
+    - Joint Distribution Adaptation (`JDA`) [[3](#references)]
+    - Balanced Distribution Adaptation (`BDA`) [[4](#references)]
+    - Maximum Independence Domain Adaptation (`MIDA`) [[5](#references)]
+  - Common (or shared or joint) and individual feature separation / extraction across groups or blocks:
+    - Common and Individual Feature Extraction (`CIFE`) [[11](#references)]
+    - Angle-based Joint and Individual Variation Explained (`AJIVE`) [[12](#references)]
+- Estimator models for prediction via `kalelinear.estimator` (PyKale-style alias: `kalelinear.predict`):
+  - Predictive models that generalize across domains or groups:
+    - Manifold Regularization Learning Framework (`LapSVM`, `LapRLS`) [[6](#references)]
+    - Adaptation Regularization Learning Framework (`ARSVM`, `ARRLS`) [[7](#references)]
+    - Covariate Independence Regularized Learning Framework (`CoIRSVM`, `CoIRLS`) [[8](#references)][[9](#references)]
+  - Group-specific predictive models:
+    - Group-specific Discriminant Analysis (`GSDA`) [[9](#references)][[10](#references)]
+- Lightweight: plain NumPy array inputs and outputs — no deep-learning framework or GPU required.
+- scikit-learn style `fit`, `transform`, `predict`, `fit_transform`, and `fit_predict` workflows where applicable.
+- Most methods accept additional `covariates` — e.g., domain or group labels — alongside `X` and `y`, with optional one-hot encoding for categorical values; multiblock transformers (CIFE, AJIVE) take `groups` to specify block membership.
+
+KaleLinear requires Python 3.10 or later. Core dependencies include:
+
+- [NumPy](http://www.numpy.org/)
+- [SciPy](https://www.scipy.org/)
+- [scikit-learn](http://scikit-learn.org/)
+- [pandas](https://pandas.pydata.org/)
+- [tensorly](http://tensorly.org/)
+- [cvxopt](http://cvxopt.org/)
+- [osqp](https://osqp.org/)
+
+## Getting started
+
+### Installation
 
 Install the released package from PyPI:
 
@@ -54,122 +63,7 @@ Install from a local checkout for development:
 pip install -e ".[dev]"
 ```
 
-Kale-Linear requires Python 3.10 or later. Core dependencies include:
-
-- [NumPy](http://www.numpy.org/)
-- [SciPy](https://www.scipy.org/)
-- [scikit-learn](http://scikit-learn.org/)
-- [pandas](https://pandas.pydata.org/)
-- [tensorly](http://tensorly.org/)
-- [cvxopt](http://cvxopt.org/)
-- [osqp](https://osqp.org/)
-
-## Quick Start
-
-### Learn a Domain-Invariant Embedding
-
-```python
-import numpy as np
-from kalelinear.transformer import TCA
-
-X = np.array(
-    [
-        [-2.0, -1.8],
-        [-1.8, -2.1],
-        [1.9, 1.7],
-        [2.1, 2.0],
-        [-1.4, -1.2],
-        [-1.2, -1.1],
-        [1.2, 1.1],
-        [1.4, 1.3],
-    ]
-)
-domain_labels = np.array([0, 0, 0, 0, 1, 1, 1, 1])
-
-transformer = TCA(n_components=2)
-z = transformer.fit_transform(X, covariates=domain_labels, target_covariate=1)
-
-z_source = z[domain_labels == 0]
-z_target = z[domain_labels == 1]
-```
-
-TCA, JDA, and BDA take domain labels through `covariates`. They do not accept
-separate source and target arrays; stack samples into one array and use
-`target_covariate` to identify the target domain.
-
-### Use MIDA with Categorical Covariates
-
-```python
-import numpy as np
-from kalelinear.transformer import MIDA
-
-x = np.random.default_rng(0).normal(size=(8, 4))
-y = np.array([0, 0, 1, 1, 0, 0, 1, 1])
-domains = np.array(["source", "source", "source", "source", "target", "target", "target", "target"])
-
-transformer = MIDA(n_components=2, covariate_encoder="onehot")
-z = transformer.fit_transform(x, y=y, covariates=domains)
-```
-
-### Train a Domain Adaptation Classifier
-
-For ARSVM and ARRLS, pass all source and target samples in `x`, labels for the
-source samples in `y`, and a covariate vector identifying the target domain.
-
-```python
-import numpy as np
-from kalelinear.estimator import ARSVM
-
-x = np.array(
-    [
-        [-2.2, -1.9],
-        [-1.9, -2.1],
-        [1.8, 2.1],
-        [2.0, 1.9],
-        [-1.4, -1.2],
-        [-1.1, -1.3],
-        [1.3, 1.1],
-        [1.5, 1.2],
-    ]
-)
-
-source_labels = np.array([0, 0, 1, 1])
-domains = np.array([0, 0, 0, 0, 1, 1, 1, 1])
-x_target = x[domains == 1]
-
-clf = ARSVM()
-clf.fit(x, source_labels, covariates=domains, target_covariate=1)
-y_pred = clf.predict(x_target)
-```
-
-### Train a Manifold-Regularized Classifier
-
-LapSVM and LapRLS can use labeled source samples together with unlabeled target
-samples. The labels array may contain only the labeled source examples.
-
-```python
-import numpy as np
-from kalelinear.estimator import LapSVM
-
-x_source = np.array([[-2.0, -1.8], [-1.8, -2.1], [1.9, 1.7], [2.1, 2.0]])
-ys = np.array([0, 0, 1, 1])
-x_target = np.array([[-1.4, -1.2], [-1.2, -1.1], [1.2, 1.1], [1.4, 1.3]])
-
-x_train = np.vstack((x_source, x_target))
-
-clf = LapSVM(kernel="linear")
-clf.fit(x_train, ys)
-y_pred = clf.predict(x_target)
-```
-
-## Public API
-
-```python
-from kalelinear.transformer import BDA, JDA, MIDA, MPCA, TCA
-from kalelinear.estimator import ARRLS, ARSVM, CoIRLS, CoIRSVM, GSDA, LapRLS, LapSVM
-```
-
-## Development
+### Development
 
 From the root of the repository, run the following commands in your terminal:
 
@@ -198,8 +92,51 @@ From the root of the repository, run the following commands in your terminal:
    sphinx-build -b html docs/source docs/build/html
    ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 
-## Related Projects
+### Public API
+
+```python
+from kalelinear.transformer import BDA, JDA, MIDA, MPCA, TCA
+from kalelinear.estimator import ARRLS, ARSVM, CoIRLS, CoIRSVM, GSDA, LapRLS, LapSVM
+```
+
+Worked examples for the main transformers and estimators are collected in
+[Tutorials](TUTORIALS.md):
+
+- Learn a domain-invariant embedding with TCA
+- Use MIDA with categorical covariates
+- Extract common and individual features across groups with CIFE or AJIVE
+- Train a domain adaptation classifier (ARSVM, ARRLS)
+- Train a manifold-regularized classifier (LapSVM, LapRLS)
+
+# References
+
+[1] Lu, H., Plataniotis, K.N. and Venetsanopoulos, A.N., 2008. [MPCA: Multilinear principal component analysis of tensor objects](https://ieeexplore.ieee.org/abstract/document/4359192/). _IEEE Transactions on Neural Networks_, 19(1), pp.18-39.
+
+[2] Pan, S.J., Tsang, I.W., Kwok, J.T. and Yang, Q., 2011. [Domain adaptation via transfer component analysis](https://dl.acm.org/doi/abs/10.1109/TNN.2010.2091281). _IEEE Transactions on Neural Networks_, 22(2), p.199-210.
+
+[3] Long, M., Wang, J., Ding, G., Sun, J. and Yu, P.S., 2013. [Transfer feature learning with joint distribution adaptation.](https://openaccess.thecvf.com/content_iccv_2013/papers/Long_Transfer_Feature_Learning_2013_ICCV_paper.pdf) In _Proceedings of the IEEE International Conference on Computer Vision_ (pp. 2200-2207).
+
+[4] Wang, J., Chen, Y., Hao, S., Feng, W. and Shen, Z., 2017, November. [Balanced distribution adaptation for transfer learning](https://ieeexplore.ieee.org/document/8215613). In _2017 IEEE International Conference on Data Mining (ICDM)_ (pp. 1129-1134). IEEE.
+
+[5] Yan, K., Kou, L. and Zhang, D., 2017. [Learning domain-invariant subspace using domain features and independence maximization](https://ieeexplore.ieee.org/document/7815350). _IEEE Transactions on Cybernetics_, 48(1), pp.288-299.
+
+[6] Belkin, M., Niyogi, P. and Sindhwani, V., 2006. Manifold regularization: [A geometric framework for learning from labeled and unlabeled examples](https://www.jmlr.org/papers/v7/belkin06a.html). _Journal of Machine Learning Research_, 7(11).
+
+[7] Long, M., Wang, J., Ding, G., Pan, S.J. and Yu, P.S., 2013. [Adaptation regularization: A general framework for transfer learning](https://ieeexplore.ieee.org/abstract/document/6550016/). _IEEE Transactions on Knowledge and Data Engineering_, 26(5), pp.1076-1089.
+
+[8] Zhou, S., Li, W., Cox, C. and Lu, H., 2020, April. [Side information dependence as a regularizer for analyzing human brain conditions across cognitive experiments](https://ojs.aaai.org/index.php/AAAI/article/view/6179). In _Proceedings of the AAAI Conference on Artificial Intelligence_ (Vol. 34, No. 04, pp. 6957-6964).
+
+[9] Zhou, S., 2022. [Interpretable Domain-Aware Learning for Neuroimage Classification](https://etheses.whiterose.ac.uk/id/eprint/31044/) (Doctoral dissertation, University of Sheffield).
+
+[10] Zhou, S., Luo, J., Jiang, Y., Wang, H., Lu, H. and Gong, G., 2025. [Group-specific discriminant analysis enhances detection of sex differences in brain functional network lateralization](https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giaf082/8244707). _GigaScience_, 14, p.giaf082.
+
+[11] Zhou, G., Cichocki, A., Zhang, Y. and Mandic, D., 2016. [Group component analysis for multiblock data: Common and individual feature extraction](https://ieeexplore.ieee.org/abstract/document/7310871). _IEEE Transactions on Neural Networks and Learning Systems_, 27(11), pp.2426-2439.
+
+[12] Feng, Q., Jiang, M., Hannig, J. and Marron, J.S., 2018. [Angle-based joint and individual variation explained](https://www.sciencedirect.com/science/article/pii/S0047259X1730204X). _Journal of Multivariate Analysis_, 166, pp.241-265.
+
+## Other open domain adaptation repositories
 
 - [POT: Python Optimal Transport](https://github.com/rflamary/POT)
 - [Everything about Transfer Learning](https://github.com/jindongwang/transferlearning)
@@ -211,4 +148,4 @@ From the root of the repository, run the following commands in your terminal:
 
 ## License
 
-Kale-Linear is released under the MIT License. See [LICENSE](LICENSE) for details.
+KaleLinear is released under the MIT License. See [LICENSE](LICENSE) for details.

@@ -20,7 +20,7 @@ class BaseKaleEstimator(BaseEstimator, ClassifierMixin):
     def __init__(
         self,
         kernel="linear",
-        k_neighbour=5,
+        k_neighbors=5,
         manifold_metric="cosine",
         knn_mode="distance",
         pos_label=1,
@@ -29,7 +29,7 @@ class BaseKaleEstimator(BaseEstimator, ClassifierMixin):
     ):
         super().__init__()
         self.kernel = kernel
-        self.k_neighbour = k_neighbour
+        self.k_neighbors = k_neighbors
         self.manifold_metric = manifold_metric
         self.knn_mode = knn_mode
         self.coef_ = None
@@ -81,6 +81,15 @@ class BaseKaleEstimator(BaseEstimator, ClassifierMixin):
         n_labeled = y.shape[0]
         q = -1 * np.ones(n_labeled)
         upper_bound = C / n_labeled
+
+        # The semi-dual Hessian is only positive-semidefinite up to rounding
+        # (manifold/MMD terms such as ``L @ K`` are not PSD in general), which
+        # makes convex QP solvers such as osqp fail on some datasets. Project
+        # ``P`` onto the PSD cone so the QP is always convex and solvable.
+        P = P.astype(np.float64)
+        P = 0.5 * (P + P.T)
+        eigenvalues, eigenvectors = np.linalg.eigh(P)
+        P = (eigenvectors * np.clip(eigenvalues, 0, None)) @ eigenvectors.T
 
         if solver == "cvxopt":
             G = np.zeros((2 * n_labeled, n_labeled))

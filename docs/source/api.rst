@@ -8,4 +8,3 @@ following pages:
 
 * :doc:`api_transformers`
 * :doc:`api_estimators`
-* :doc:`api_utilities`
