@@ -10,6 +10,8 @@ def test_embed_module_exposes_transformers():
     assert embed.BDA is transformer.BDA
     assert embed.MIDA is transformer.MIDA
     assert embed.MPCA is transformer.MPCA
+    assert embed.CIFE is transformer.CIFE
+    assert embed.AJIVE is transformer.AJIVE
 
 
 def test_predict_module_exposes_estimators():

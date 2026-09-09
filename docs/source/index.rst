@@ -1,4 +1,4 @@
-kalelinear Documentation
+KaleLinear Documentation
 =========================
 
 Getting Started
@@ -11,21 +11,19 @@ Getting Started
    installation
    tutorial
 
-kalelinear API
+KaleLinear API
 ---------------
 
 .. toctree::
    :maxdepth: 2
 
-   api_embed
    api_transformers
-   api_predict
    api_estimators
-   api_utilities
 
-kalelinear APIs above are ordered following the machine learning pipeline,
-i.e., feature embedding transformers, predictive estimators, and reusable
-utilities, rather than alphabetically.
+The API pages above are ordered following the machine learning pipeline,
+i.e., feature embedding transformers and predictive estimators, rather than
+alphabetically. `kalelinear.embed` and `kalelinear.predict` are PyKale-compatible
+aliases of `kalelinear.transformer` and `kalelinear.estimator`, respectively.
 
 Project
 -------

@@ -9,28 +9,35 @@
 [![PyPI version](https://img.shields.io/pypi/v/kalelinear?color=blue)](https://pypi.org/project/kalelinear/)
 [![PyPI downloads](https://pepy.tech/badge/kalelinear)](https://pepy.tech/project/kalelinear)
 
-`kalelinear` is a Python library for learning harmonized or individualized models from multi-source/multi-view data in linear or reproducing kernel Hilbert spaces (RKHS). It provides NumPy-based methods for leveraging related data distributions and structural assumptions, including transfer learning, domain adaptation, manifold regularization, and group-aware learning, through a [`scikit-learn`](https://github.com/scikit-learn/scikit-learn) style API.
+KaleLinear is a Python library for non-deep machine learning that learns transferable, shared, or group-specific models from data across multiple sources, groups, blocks, or views. It provides NumPy-based methods in linear or reproducing kernel Hilbert spaces (RKHS), including transfer learning, domain adaptation, manifold regularization, and group-aware learning, through a [`scikit-learn`](https://github.com/scikit-learn/scikit-learn) style API.
 
 The package is part of the [PyKale](https://github.com/pykale/pykale) ecosystem and focuses on linear and kernel methods for data characterized by covariates (e.g., domain labels, group labels, side information), unlabeled target samples, or tensor structures.
 
-## What's included
+## Key features
 
-- Transformer models for learning feature embeddings:
-  - Multilinear Principal Component Analysis (MPCA) [[1](#references)]
-  - Transfer Component Analysis (TCA) [[2](#references)]
-  - Joint Distribution Adaptation (JDA) [[3](#references)]
-  - Balanced Distribution Adaptation (BDA) [[4](#references)]
-  - Maximum Independence Domain Adaptation (MIDA) [[5](#references)]
-- Estimator models for classification:
-  - Manifold Regularization Learning Framework (LapSVM, LapRLS) [[6](#references)]
-  - Adaptation Regularization Learning Framework (ARSVM, ARRLS) [[7](#references)]
-  - Covariate Independence Regularized Learning Framework (CoIRSVM, CoIRLS) [[8](#references)][[9](#references)]
-  - Group-specific Discriminant Analysis (GSDA) [[9](#references)][[10](#references)]
-- NumPy-compatible inputs and outputs.
+- Feature transformation models for data embedding via `kalelinear.transformer` (PyKale-style alias: `kalelinear.embed`):
+  - Dimension reduction for multiview tensor data:
+    - Multilinear Principal Component Analysis (`MPCA`) [[1](#references)]
+  - Transferable / generalizable feature extraction across domains or groups:
+    - Transfer Component Analysis (`TCA`) [[2](#references)]
+    - Joint Distribution Adaptation (`JDA`) [[3](#references)]
+    - Balanced Distribution Adaptation (`BDA`) [[4](#references)]
+    - Maximum Independence Domain Adaptation (`MIDA`) [[5](#references)]
+  - Common (or shared or joint) and individual feature separation / extraction across groups or blocks:
+    - Common and Individual Feature Extraction (`CIFE`) [[11](#references)]
+    - Angle-based Joint and Individual Variation Explained (`AJIVE`) [[12](#references)]
+- Estimator models for prediction via `kalelinear.estimator` (PyKale-style alias: `kalelinear.predict`):
+  - Predictive models that generalize across domains or groups:
+    - Manifold Regularization Learning Framework (`LapSVM`, `LapRLS`) [[6](#references)]
+    - Adaptation Regularization Learning Framework (`ARSVM`, `ARRLS`) [[7](#references)]
+    - Covariate Independence Regularized Learning Framework (`CoIRSVM`, `CoIRLS`) [[8](#references)][[9](#references)]
+  - Group-specific predictive models:
+    - Group-specific Discriminant Analysis (`GSDA`) [[9](#references)][[10](#references)]
+- Lightweight: plain NumPy array inputs and outputs — no deep-learning framework or GPU required.
 - scikit-learn style `fit`, `transform`, `predict`, `fit_transform`, and `fit_predict` workflows where applicable.
-- Optional covariate encoding for categorical domain or group labels.
+- Most methods accept additional `covariates` — e.g., domain or group labels — alongside `X` and `y`, with optional one-hot encoding for categorical values; multiblock transformers (CIFE, AJIVE) take `groups` to specify block membership.
 
-`kalelinear` requires Python 3.10 or later. Core dependencies include:
+KaleLinear requires Python 3.10 or later. Core dependencies include:
 
 - [NumPy](http://www.numpy.org/)
 - [SciPy](https://www.scipy.org/)
@@ -99,6 +106,7 @@ Worked examples for the main transformers and estimators are collected in
 
 - Learn a domain-invariant embedding with TCA
 - Use MIDA with categorical covariates
+- Extract common and individual features across groups with CIFE or AJIVE
 - Train a domain adaptation classifier (ARSVM, ARRLS)
 - Train a manifold-regularized classifier (LapSVM, LapRLS)
 
@@ -124,6 +132,10 @@ Worked examples for the main transformers and estimators are collected in
 
 [10] Zhou, S., Luo, J., Jiang, Y., Wang, H., Lu, H. and Gong, G., 2025. [Group-specific discriminant analysis enhances detection of sex differences in brain functional network lateralization](https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giaf082/8244707). _GigaScience_, 14, p.giaf082.
 
+[11] Zhou, G., Cichocki, A., Zhang, Y. and Mandic, D., 2016. [Group component analysis for multiblock data: Common and individual feature extraction](https://ieeexplore.ieee.org/abstract/document/7310871). _IEEE Transactions on Neural Networks and Learning Systems_, 27(11), pp.2426-2439.
+
+[12] Feng, Q., Jiang, M., Hannig, J. and Marron, J.S., 2018. [Angle-based joint and individual variation explained](https://www.sciencedirect.com/science/article/pii/S0047259X1730204X). _Journal of Multivariate Analysis_, 166, pp.241-265.
+
 ## Other open domain adaptation repositories
 
 - [POT: Python Optimal Transport](https://github.com/rflamary/POT)
@@ -136,4 +148,4 @@ Worked examples for the main transformers and estimators are collected in
 
 ## License
 
-`kalelinear` is released under the MIT License. See [LICENSE](LICENSE) for details.
+KaleLinear is released under the MIT License. See [LICENSE](LICENSE) for details.
