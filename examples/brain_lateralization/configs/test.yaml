@@ -1,0 +1,7 @@
+DATASET:
+  ROOT: "data"
+  NUM_REPEAT: 5
+SOLVER:
+  SEED: 2022
+OUTPUT:
+  ROOT: 'output'

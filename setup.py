@@ -15,10 +15,13 @@ install_requires = ["cvxopt", "numpy", "osqp", "pandas", "scikit-learn>=1.6.0", 
 
 # Dependencies for all examples and tutorials
 example_requires = [
+    "h5py",
     "ipykernel",
     "ipython",
     "matplotlib",
+    "nibabel",
     "nilearn",
+    "pykale",
     "seaborn",
     "yacs>=0.1.7",
 ]

@@ -1,0 +1,13 @@
+DATASET:
+  DATASET: "GSP"
+  ROOT: "data"
+  MIX_GROUP: False
+  TEST_RATIO: 0.2
+SOLVER:
+  LAMBDA_: [0.0, 2.0, 5.0, 10]
+  LR: 1.0
+  SEED: 2023
+  OPTIMIZER: "lbfgs"
+  MAX_ITER: 100
+OUTPUT:
+  ROOT: "output"
