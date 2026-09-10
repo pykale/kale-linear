@@ -33,6 +33,40 @@ label is the target domain.
    z_source = z[domain_labels == 0]
    z_target = z[domain_labels == 1]
 
+Align Source and Target Features with CORAL
+-------------------------------------------
+
+CORAL is an asymmetric domain alignment method: it whitens the source
+covariance and recolors it with the target covariance. As with TCA, pass all
+samples in one array with binary domain labels. ``fit_transform`` centers each
+domain by its own mean, aligns the source samples, and leaves the target
+samples in the same centered space.
+
+.. code-block:: python
+
+   import numpy as np
+   from kalelinear.transformer import CORAL
+
+   X = np.array(
+       [
+           [-2.0, -1.8],
+           [-1.8, -2.1],
+           [1.9, 1.7],
+           [2.1, 2.0],
+           [-1.4, -1.2],
+           [-1.2, -1.1],
+           [1.2, 1.1],
+           [1.4, 1.3],
+       ]
+   )
+   domain_labels = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+
+   transformer = CORAL()
+   z = transformer.fit_transform(X, covariates=domain_labels, target_covariate=1)
+
+   z_source = z[domain_labels == 0]
+   z_target = z[domain_labels == 1]
+
 Use MIDA with Categorical Covariates
 ------------------------------------
 

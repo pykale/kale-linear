@@ -6,9 +6,10 @@ Usage
 Domain Adaptation Transformers
 ------------------------------
 
-TCA, JDA, and BDA take all samples in a single input array and receive domain
-labels through ``covariates``. Use ``target_covariate`` to identify which domain
-label is the target domain.
+TCA, JDA, BDA, and CORAL take all samples in a single input array and receive
+domain labels through ``covariates``. Use ``target_covariate`` to identify
+which domain label is the target domain. CORAL is asymmetric: after fitting, it
+aligns source samples to the target covariance and centers target samples.
 
 .. code-block:: python
 
